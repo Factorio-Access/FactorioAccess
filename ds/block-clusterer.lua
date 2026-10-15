@@ -1,6 +1,6 @@
 --[[
-Groups the set cells of an unbounded integer grid into 4-connected groups ("bodies"), with cells added and
-removed at any time. Used for bodies of tiles (a cell is a tile) and forests (a cell is a square of tiles with a
+Groups the set cells of an unbounded integer grid into 4-connected groups ("bodies"), or 8-connected ones (cells
+touching at a corner join too) when made with diagonal = true, with cells added and removed at any time. Used for bodies of tiles (a cell is a tile) and forests (a cell is a square of tiles with a
 tree in it).
 
 # Layout
@@ -91,6 +91,7 @@ mod.popcount = popcount
 ---@field edges integer
 
 ---@class fa.ds.BlockClusterer
+---@field diagonal boolean Cells touching at a corner join; edge cells are still counted by their 4 neighbours
 ---@field blocks table<integer, table<integer, fa.ds.BlockClusterer.Block>>
 ---@field dirty table<integer, table<integer, true>>
 ---@field groups fa.ds.BlockClusterer.Group[]? Nil when stale
@@ -101,9 +102,18 @@ local BlockClusterer_meta = { __index = BlockClusterer }
 if script then script.register_metatable("fa.ds.BlockClusterer", BlockClusterer_meta) end
 mod.BlockClusterer = BlockClusterer
 
+---@param opts { diagonal: boolean? }?
 ---@return fa.ds.BlockClusterer
-function BlockClusterer.new()
-   return setmetatable({ blocks = {}, dirty = {}, groups = nil }, BlockClusterer_meta)
+function BlockClusterer.new(opts)
+   local diagonal = opts and opts.diagonal or false
+   return setmetatable({ diagonal = diagonal, blocks = {}, dirty = {}, groups = nil }, BlockClusterer_meta)
+end
+
+-- A mask widened by one bit each way: what a run or border touches when corners count.
+---@param m integer
+---@return integer
+local function widen(m)
+   return bor(m, lshift(m, 1), rshift(m, 1))
 end
 
 ---@return integer[]
@@ -276,6 +286,7 @@ local function label_block(self, bx, by, block)
    local parent = {}
    local n_runs = 0
    local prev_first, prev_last = 1, 0
+   local diagonal = self.diagonal
 
    ---@param r integer
    ---@return integer
@@ -300,8 +311,9 @@ local function label_block(self, bx, by, block)
          run_y[n_runs] = i
          run_mask[n_runs] = run
          parent[n_runs] = n_runs
+         local reach = diagonal and widen(run) or run
          for p = prev_first, prev_last do
-            if band(run, run_mask[p]) ~= 0 then
+            if band(reach, run_mask[p]) ~= 0 then
                local a, b = find(n_runs), find(p)
                if a ~= b then
                   -- The older run's root wins, so roots are each component's first run.
@@ -402,20 +414,37 @@ local function regroup(self)
       end
    end
 
+   local diagonal = self.diagonal
    for bx, col in pairs(blocks) do
       local east_col = blocks[bx + 1]
+      local west_col = blocks[bx - 1]
       for by, block in pairs(col) do
          local east = east_col and east_col[by]
          local south = col[by + 1]
+         -- Blocks meeting this one only at a corner, below it: their components join through the corner cells.
+         local south_east = diagonal and east_col and east_col[by + 1]
+         local south_west = diagonal and west_col and west_col[by + 1]
          for _, a in ipairs(block.comps) do
             if east and a.e ~= 0 then
+               local reach = diagonal and widen(a.e) or a.e
                for _, b in ipairs(east.comps) do
-                  if band(a.e, b.w) ~= 0 then union(a, b) end
+                  if band(reach, b.w) ~= 0 then union(a, b) end
                end
             end
             if south and a.s ~= 0 then
+               local reach = diagonal and widen(a.s) or a.s
                for _, b in ipairs(south.comps) do
-                  if band(a.s, b.n) ~= 0 then union(a, b) end
+                  if band(reach, b.n) ~= 0 then union(a, b) end
+               end
+            end
+            if south_east and band(a.s, TOP_BIT) ~= 0 then
+               for _, b in ipairs(south_east.comps) do
+                  if band(b.n, 1) ~= 0 then union(a, b) end
+               end
+            end
+            if south_west and band(a.s, 1) ~= 0 then
+               for _, b in ipairs(south_west.comps) do
+                  if band(b.n, TOP_BIT) ~= 0 then union(a, b) end
                end
             end
          end

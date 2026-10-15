@@ -1,13 +1,27 @@
+--[[
+Ore patches. Each kind of ore has a block clusterer whose cell is a square of twice the ore's search radius
+(resource_patch_search_radius) with that ore in it; cells touching at a side or a corner are one patch. Vanilla
+patches are round and far apart, so this finds the same patches as joining tiles within the search radius.
+
+Each map chunk keeps, per ore, what it held when its ore was found: the richest tile, the total, and the bounds of
+the ore. A patch is the chunks whose richest tile is in it: their bounds make its box and their totals its initial
+amount, for "percent remaining". Nothing is forgotten as ore is mined out; announcing re-reads the patch.
+]]
+local BlockClusterer = require("ds.block-clusterer")
 local Consts = require("scripts.consts")
 local DataToRuntimeMap = require("scripts.data-to-runtime-map")
-local Clusterer = require("ds.clusterer")
 local FaInfo = require("scripts.fa-info")
 local FaUtils = require("scripts.fa-utils")
 local Functools = require("scripts.functools")
 local ScannerConsts = require("scripts.scanner.scanner-consts")
 local Speech = require("scripts.speech")
 
+local band, bor, lshift = bit32.band, bit32.bor, bit32.lshift
+
 local mod = {}
+
+local CHUNK_SIZE = 32
+local BLOCK_SIZE = BlockClusterer.BLOCK_SIZE
 
 ---@type fun(): table<string, number?>
 local PROTOTYPE_SEARCH_RADIUSES = Functools.cached(function()
@@ -16,44 +30,33 @@ local PROTOTYPE_SEARCH_RADIUSES = Functools.cached(function()
 end)
 
 ---@class fa.scanner.ResourcePatch
----@field highest_point { x: number, y: number, entity: LuaEntity, amount: number }
+---@field highest_point { x: number, y: number, amount: number }
 ---@field initial_total_amount number
 ---@field prototype string
 
 ---@class fa.scanner.ResourcePatchEntData: fa.scanner.ResourcePatch
+---@field aabb BoundingBox.struct
 ---@field zoom_override LuaEntity?
 
+-- One ore in one map chunk, as found: the richest tile, the total, and the bounds of its tiles.
+---@class fa.scanner.ResourceChunk
+---@field x number
+---@field y number
+---@field amount number
+---@field total number
+---@field x0 number
+---@field y0 number
+---@field x1 number
+---@field y1 number
+
 ---@class fa.scanner.ResourcePatchesBackend: fa.scanner.ScannerBackend
----@field clusterers table<string, fa.ds.Clusterer?>
----@field known_patches table<string, table<any, true>>
+---@field clusterers table<string, fa.ds.BlockClusterer?> By ore: a cell is a square of cell_sizes[ore] tiles with it
+---@field cell_sizes table<string, integer>
+---@field chunks table<string, table<number, fa.scanner.ResourceChunk>> By ore, then chunk_key
 local ResourcePatchesBackend = {}
 local ResourcePatchesBackend_meta = { __index = ResourcePatchesBackend }
 script.register_metatable("fa.scanner.ResourcePatches", ResourcePatchesBackend_meta)
 mod.ResourcePatchesBackend = ResourcePatchesBackend
-
----@param a fa.scanner.ResourcePatch
----@param b fa.scanner.ResourcePatch
----@return fa.scanner.ResourcePatch
-local function fold_patches(a, b)
-   local highest
-
-   if a.highest_point.amount > b.highest_point.amount then
-      highest = a.highest_point
-   else
-      highest = b.highest_point
-   end
-
-   return {
-      highest_point = highest,
-      initial_total_amount = a.initial_total_amount + b.initial_total_amount,
-
-      prototype = a.prototype,
-   }
-end
-
-local clusterer_fact = Clusterer.declare_clusterer("fa.scanner.ResourceClusterer", {
-   fold = fold_patches,
-})
 
 ---@param ent LuaEntity
 ---@return integer
@@ -61,22 +64,29 @@ local function amount_for(ent)
    return ent.amount
 end
 
+-- Chunk coordinates are within plus or minus 2^15 on any map.
+---@param cx integer
+---@param cy integer
+---@return number
+local function chunk_key(cx, cy)
+   return (cx + 32768) * 65536 + (cy + 32768)
+end
+
 ---@return fa.scanner.ResourcePatchesBackend
 function ResourcePatchesBackend.new()
    local ret = {
-      known_patches = {},
       clusterers = {},
+      cell_sizes = {},
+      chunks = {},
    }
    return setmetatable(ret, ResourcePatchesBackend_meta)
 end
 
 ---@param proto string
----@return fa.ds.Clusterer
+---@return fa.ds.BlockClusterer
 function ResourcePatchesBackend:get_clusterer_for(proto)
    local c = self.clusterers[proto]
    if c then return c end
-
-   local proto_def = prototypes.entity[proto]
 
    -- The radius of the resource is only available on the raw prototype.  While
    -- it is the case that the resource search distance is optional, we're a mod
@@ -86,28 +96,116 @@ function ResourcePatchesBackend:get_clusterer_for(proto)
    -- is a bug; trees have long since been moved to their own clusterer.
    assert(search_radius)
 
-   local nc = clusterer_fact(search_radius)
-
+   local nc = BlockClusterer.BlockClusterer.new({ diagonal = true })
    self.clusterers[proto] = nc
+   self.cell_sizes[proto] = math.max(1, math.floor(2 * search_radius))
+   self.chunks[proto] = {}
    return nc
 end
 
 ---@param new_entity LuaEntity
 function ResourcePatchesBackend:on_new_entity(new_entity)
+   local name = new_entity.name
    local amount = amount_for(new_entity)
    local pos = new_entity.position --[[@as MapPosition.struct]]
+   local x, y = pos.x, pos.y
 
-   self:get_clusterer_for(new_entity.name):insert(pos.x, pos.y, {
-      highest_point = {
-         x = pos.x,
-         y = pos.y,
-         amount = amount,
-         entity = new_entity,
-      },
-      initial_total_amount = amount,
+   local clusterer = self:get_clusterer_for(name)
+   local size = self.cell_sizes[name]
+   local cx, cy = math.floor(x / size), math.floor(y / size)
+   local bx, by = math.floor(cx / BLOCK_SIZE), math.floor(cy / BLOCK_SIZE)
+   local ri = cy - by * BLOCK_SIZE + 1
+   local bit = lshift(1, cx - bx * BLOCK_SIZE)
+   local rows = clusterer:get_rows(bx, by)
+   if not rows or band(rows[ri], bit) == 0 then
+      -- The clusterer keeps the rows it is given, so a change is a new copy.
+      local new_rows = {}
+      for i = 1, BLOCK_SIZE do
+         new_rows[i] = rows and rows[i] or 0
+      end
+      new_rows[ri] = bor(new_rows[ri], bit)
+      clusterer:set_block(bx, by, new_rows)
+   end
 
-      prototype = new_entity.name,
-   })
+   local chunks = self.chunks[name]
+   local key = chunk_key(math.floor(x / CHUNK_SIZE), math.floor(y / CHUNK_SIZE))
+   local c = chunks[key]
+   if not c then
+      chunks[key] = { x = x, y = y, amount = amount, total = amount, x0 = x, y0 = y, x1 = x, y1 = y }
+      return
+   end
+   c.total = c.total + amount
+   if amount > c.amount then
+      c.x, c.y, c.amount = x, y, amount
+   end
+   if x < c.x0 then c.x0 = x end
+   if y < c.y0 then c.y0 = y end
+   if x > c.x1 then c.x1 = x end
+   if y > c.y1 then c.y1 = y end
+end
+
+-- The ore's patches now, each with its box in tiles and its chunks' data folded together.
+---@param proto string
+---@return { aabb: BoundingBox.struct, data: fa.scanner.ResourcePatch }[]
+function ResourcePatchesBackend:patches(proto)
+   local clusterer = assert(self.clusterers[proto])
+   local size = self.cell_sizes[proto]
+
+   -- Which group each component is in, to find a chunk's patch from its richest tile.
+   ---@type table<fa.ds.BlockClusterer.Component, integer>
+   local group_of = {}
+   for gi, g in ipairs(clusterer:get_groups()) do
+      for _, comp in ipairs(g.comps) do
+         group_of[comp] = gi
+      end
+   end
+
+   ---@type table<integer, { aabb: BoundingBox.struct, data: fa.scanner.ResourcePatch }>
+   local by_group = {}
+   for _, c in pairs(self.chunks[proto]) do
+      local cx, cy = math.floor(c.x / size), math.floor(c.y / size)
+      local bx, by = math.floor(cx / BLOCK_SIZE), math.floor(cy / BLOCK_SIZE)
+      local lx, ly = cx - bx * BLOCK_SIZE, cy - by * BLOCK_SIZE
+      local block = assert(clusterer:get_block(bx, by), "a found tile's cell is set")
+      ---@type integer?
+      local gi
+      for _, comp in ipairs(block.comps) do
+         local row = comp.rows[ly - comp.y0 + 1]
+         if row and band(row, lshift(1, lx)) ~= 0 then
+            gi = group_of[comp]
+            break
+         end
+      end
+      gi = assert(gi, "a set cell is in a component")
+
+      -- A tile at x spans x to x + 1, wherever the entity's position is in it.
+      local x0, y0, x1, y1 = math.floor(c.x0), math.floor(c.y0), math.floor(c.x1) + 1, math.floor(c.y1) + 1
+      local p = by_group[gi]
+      if not p then
+         by_group[gi] = {
+            aabb = { left_top = { x = x0, y = y0 }, right_bottom = { x = x1, y = y1 } },
+            data = {
+               highest_point = { x = c.x, y = c.y, amount = c.amount },
+               initial_total_amount = c.total,
+               prototype = proto,
+            },
+         }
+      else
+         local lt, rb, d = p.aabb.left_top, p.aabb.right_bottom, p.data
+         if x0 < lt.x then lt.x = x0 end
+         if y0 < lt.y then lt.y = y0 end
+         if x1 > rb.x then rb.x = x1 end
+         if y1 > rb.y then rb.y = y1 end
+         d.initial_total_amount = d.initial_total_amount + c.total
+         if c.amount > d.highest_point.amount then d.highest_point = { x = c.x, y = c.y, amount = c.amount } end
+      end
+   end
+
+   local out = {}
+   for _, p in pairs(by_group) do
+      out[#out + 1] = p
+   end
+   return out
 end
 
 function ResourcePatchesBackend:on_entity_destroyed()
@@ -179,22 +277,17 @@ end
 ---@param player LuaPlayer
 ---@param callback fun(fa.scanner.ScanEntry)
 function ResourcePatchesBackend:dump_entries_to_callback(player, callback)
-   local seen_clusterers = {}
-
    local player_pos = player.position --[[@as MapPosition.struct]]
    local px, py = player_pos.x, player_pos.y
 
-   for n, c in pairs(self.clusterers) do
-      if seen_clusterers[c] then goto continue end
-      seen_clusterers[c] = true
-
+   for n in pairs(self.clusterers) do
       local is_infinite = prototypes.entity[n].infinite_resource
 
       local zoom_dist = nil
 
       if is_infinite then zoom_dist = ScannerConsts.INFINITE_RESOURCE_ZOOM_DISTANCE end
 
-      c:get_clusters(function(cluster)
+      local function emit(cluster)
          ---@type fa.scanner.ResourcePatch
          local d = cluster.data
 
@@ -204,11 +297,9 @@ function ResourcePatchesBackend:dump_entries_to_callback(player, callback)
             category = ScannerConsts.CATEGORIES.RESOURCES,
             position = { x = d.highest_point.x, y = d.highest_point.y },
             subcategory = n,
-            -- Required because this may get modified later as clusters fold
-            -- into each other.
             backend_data = {
                aabb = cluster.aabb,
-               highest_point = table.deepcopy(d.highest_point),
+               highest_point = d.highest_point,
                -- Without the prototype, we can't do a query on the patch without
                -- having an original entity, which may no longer exist.
                prototype = n,
@@ -263,11 +354,9 @@ function ResourcePatchesBackend:dump_entries_to_callback(player, callback)
                   category = ScannerConsts.CATEGORIES.RESOURCES,
                   position = { x = e.position.x, y = e.position.y },
                   subcategory = e.name,
-                  -- Required because this may get modified later as clusters fold
-                  -- into each other.
                   backend_data = {
                      aabb = table.deepcopy(e.bounding_box),
-                     highest_point = table.deepcopy(d.highest_point),
+                     highest_point = d.highest_point,
                      -- Without the prototype, we can't do a query on the patch without
                      -- having an original entity, which may no longer exist.
                      prototype = n,
@@ -291,9 +380,11 @@ function ResourcePatchesBackend:dump_entries_to_callback(player, callback)
          local remaining_count = player.surface.count_entities_filtered(filter)
 
          if consumed_count < remaining_count then callback(ent_agg) end
-      end)
+      end
 
-      ::continue::
+      for _, cluster in ipairs(self:patches(n)) do
+         emit(cluster)
+      end
    end
 end
 

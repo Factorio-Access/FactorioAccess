@@ -8,7 +8,7 @@ queue which will call a specified function and use a specified key in storage
 for the state.  Queues cannot currently be shared or stored in storage by the
 user--they're singletons.  This may later be fixed with a migration which kills
 the work_queues key of storage, then starts returning a full state.  That's not
-hard, as one can use a similar trick to scripts.ds.clusterer, just not worth it
+hard (bind the callbacks when declaring, keep only state in storage), just not worth it
 as of this writing (2024-09-05).  Note that such a replacement must also solve
 being registered with a central registry, which is a non-obvious problem.
 Otherwise they can't advance with this module's on_tick.

@@ -36,9 +36,13 @@ local function load(c, cells, touched)
    end
 end
 
+local SIDES = { { -1, 0 }, { 1, 0 }, { 0, -1 }, { 0, 1 } }
+local SIDES_AND_CORNERS = { { -1, 0 }, { 1, 0 }, { 0, -1 }, { 0, 1 }, { -1, -1 }, { 1, -1 }, { -1, 1 }, { 1, 1 } }
+
 -- Flood fill the cells into bodies: sorted summaries "x0 y0 x1 y1 cells edges", each body's edge cells, and the
--- body index of every cell.
-local function brute_force(cells)
+-- body index of every cell. Edge cells always count 4 neighbours; diagonal only changes what joins.
+local function brute_force(cells, diagonal)
+   local joins = diagonal and SIDES_AND_CORNERS or SIDES
    local body_of = {}
    local summaries = {}
    local bodies = {}
@@ -58,7 +62,7 @@ local function brute_force(cells)
             count = count + 1
             x0, y0, x1, y1 = math.min(x0, x), math.min(y0, y), math.max(x1, x), math.max(y1, y)
             if not (has(x - 1, y) and has(x + 1, y) and has(x, y - 1) and has(x, y + 1)) then edges[#edges + 1] = q end
-            for _, d in ipairs({ { -1, 0 }, { 1, 0 }, { 0, -1 }, { 0, 1 } }) do
+            for _, d in ipairs(joins) do
                local nk = key(x + d[1], y + d[2])
                if cells[nk] and not body_of[nk] then
                   body_of[nk] = id
@@ -96,7 +100,7 @@ local function a_cell_of(g)
 end
 
 local function check(c, cells, label)
-   local expected, bodies, body_of = brute_force(cells)
+   local expected, bodies, body_of = brute_force(cells, c.diagonal)
    lu.assertEquals(summaries_of(c), expected, label)
 
    -- The closest edge cell is in the group's body and as close as the brute force's, for a few probe points.
@@ -196,10 +200,10 @@ function mod.TestUShapeJoinsInsideOneBlock()
    lu.assertEquals(#c:get_groups(), 1)
 end
 
-function mod.TestRandomAgainstFloodFill()
+local function random_against_flood_fill(diagonal)
    for seed = 1, 12 do
       local r = rng(seed)
-      local c = BC.BlockClusterer.new()
+      local c = BC.BlockClusterer.new({ diagonal = diagonal })
       local cells = {}
       -- A region over 4 by 4 blocks, including negative coordinates, at a density that makes many bodies.
       local density = 30 + r(50)
@@ -227,6 +231,38 @@ function mod.TestRandomAgainstFloodFill()
          end
          load(c, cells, touched)
          check(c, cells, "seed " .. seed .. " round " .. round)
+      end
+   end
+end
+
+function mod.TestRandomAgainstFloodFill()
+   random_against_flood_fill(false)
+end
+
+function mod.TestRandomAgainstFloodFillDiagonal()
+   random_against_flood_fill(true)
+end
+
+-- Two cells touching only at a corner: one body with diagonal, two without. Inside a block, across each border,
+-- and across both kinds of block corner.
+function mod.TestCornerContacts()
+   local pairs_ = {
+      { "inside a block", { 5, 5 }, { 6, 6 } },
+      { "inside a block, other diagonal", { 6, 5 }, { 5, 6 } },
+      { "across the east border", { 31, 5 }, { 32, 6 } },
+      { "across the south border", { 5, 31 }, { 6, 32 } },
+      { "across a south-east block corner", { 31, 31 }, { 32, 32 } },
+      { "across a south-west block corner", { 32, 31 }, { 31, 32 } },
+      { "across a corner at negative blocks", { -1, -1 }, { 0, 0 } },
+   }
+   for _, case in ipairs(pairs_) do
+      local a, b = case[2], case[3]
+      local cells = { [key(a[1], a[2])] = a, [key(b[1], b[2])] = b }
+      for _, diagonal in ipairs({ false, true }) do
+         local c = BC.BlockClusterer.new({ diagonal = diagonal })
+         load(c, cells, {})
+         check(c, cells, case[1])
+         lu.assertEquals(#c:get_groups(), diagonal and 1 or 2, case[1] .. (diagonal and ", diagonal" or ""))
       end
    end
 end
