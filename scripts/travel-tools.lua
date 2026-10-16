@@ -42,8 +42,8 @@ local travel_storage = StorageManager.declare_storage_module("fast_travel", {
    order = {},
 })
 
----A tab's filter: every point, the uncategorized ones, or one category's
----@alias fa.travel.Filter "all"|"uncategorized"|integer
+---A tab's filter: every point, or one category's
+---@alias fa.travel.Filter "all"|integer
 
 -- The base game's planets, in the order the game lists them; other surfaces follow by name
 local BASE_PLANETS = { nauvis = 1, vulcanus = 2, gleba = 3, fulgora = 4, aquilo = 5 }
@@ -125,9 +125,7 @@ end
 ---@param filter fa.travel.Filter
 ---@return boolean
 local function passes(point, filter)
-   if filter == "all" then return true end
-   if filter == "uncategorized" then return point.category == nil end
-   return point.category == filter
+   return filter == "all" or point.category == filter
 end
 
 ---A surface's points that pass the filter, in the player's order (or by name, with the legacy setting).
@@ -148,18 +146,16 @@ function mod.points(pindex, surface_index, filter)
    return out
 end
 
----The categories with points on a surface, by name, and whether it has uncategorized points.
+---The categories with points on a surface, by name.
 ---@param pindex integer
 ---@param surface_index integer
----@return { id: integer, name: string }[], boolean
+---@return { id: integer, name: string }[]
 function mod.categories_on(pindex, surface_index)
    local state = travel_storage[pindex]
-   local seen, out, uncategorized = {}, {}, false
+   local seen, out = {}, {}
    for _, id in ipairs(state.order[surface_index] or {}) do
       local category = state.points[id].category
-      if not category then
-         uncategorized = true
-      elseif not seen[category] then
+      if category and not seen[category] then
          seen[category] = true
          table.insert(out, { id = category, name = state.categories[category] })
       end
@@ -167,7 +163,7 @@ function mod.categories_on(pindex, surface_index)
    table.sort(out, function(a, b)
       return a.name < b.name
    end)
-   return out, uncategorized
+   return out
 end
 
 ---Every category's name, sorted, for choosing one.
@@ -304,7 +300,8 @@ function mod.set_category(pindex, id, name)
    forget_empty_categories(state)
 end
 
----The categories a point steps through with shift+a/d: its surface's occupied ones by name, then uncategorized.
+---The categories a point steps through with shift+a/d: uncategorized, then its surface's occupied ones by name.
+---Uncategorized comes first as the menu's tabs do: all, where a new uncategorized point is made, then the categories.
 ---Returns the name it moved to, or nil at either end.
 ---@param pindex integer
 ---@param id integer
@@ -314,12 +311,11 @@ function mod.step_category(pindex, id, direction)
    local point = mod.get_point(pindex, id)
    local categories = mod.categories_on(pindex, point.surface_index)
    ---@type (integer|false)[]
-   local steps = {}
+   local steps = { false }
    for _, c in ipairs(categories) do
       table.insert(steps, c.id)
    end
-   table.insert(steps, false)
-   local at = #steps
+   local at = 1
    for i, step in ipairs(steps) do
       if step == (point.category or false) then at = i end
    end

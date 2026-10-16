@@ -54,7 +54,7 @@ describe("Fast travel", function()
 
          local c = TravelTools.create_point(pindex, "c", s, { x = 0, y = 0 })
          local a = TravelTools.create_point(pindex, "a", s, { x = 0, y = 0 })
-         TravelTools.create_point(pindex, "b", s, { x = 0, y = 0 })
+         local b = TravelTools.create_point(pindex, "b", s, { x = 0, y = 0 })
          ctx:assert_equals("a,b,c", labels(pindex, s, "all"), "new points go in by name")
 
          ctx:assert(TravelTools.drag_point(pindex, c, -1, TravelTools.points(pindex, s, "all")), "dragged")
@@ -68,22 +68,27 @@ describe("Fast travel", function()
          TravelTools.set_category(pindex, a, "Ore")
          TravelTools.set_category(pindex, c, "Ore")
          ctx:assert_equals("a,c", labels(pindex, s, assert(TravelTools.get_point(pindex, a).category)), "the Ore tab")
-         ctx:assert_equals("bb,b", labels(pindex, s, "uncategorized"), "the rest")
+         local z = TravelTools.create_point(pindex, "z", s, { x = 0, y = 0 }, "Wood")
+         local wood = assert(TravelTools.get_point(pindex, z).category)
 
          -- Dragging in a category tab moves among that category, and the change holds in all
          ctx:assert(
-            TravelTools.drag_point(pindex, c, -1, TravelTools.points(pindex, s, "uncategorized")) == false,
-            "c is not in that list"
+            TravelTools.drag_point(pindex, c, -1, TravelTools.points(pindex, s, wood)) == false,
+            "c is not in Wood"
          )
          local ore_points = TravelTools.points(pindex, s, assert(TravelTools.get_point(pindex, a).category))
          ctx:assert(TravelTools.drag_point(pindex, c, -1, ore_points), "dragged within Ore")
-         ctx:assert_equals("c,a,bb,b", labels(pindex, s, "all"), "seen in all")
+         ctx:assert_equals("c,a,bb,b,z", labels(pindex, s, "all"), "seen in all")
 
-         -- Stepping: Ore, then uncategorized; past the end, nothing
-         ctx:assert_equals(false, TravelTools.step_category(pindex, a, 1), "to uncategorized")
-         ctx:assert_equals(nil, TravelTools.step_category(pindex, a, 1), "uncategorized is last")
+         -- Stepping: uncategorized, then Ore, then Wood; past either end, nothing
+         ctx:assert_equals(nil, TravelTools.step_category(pindex, b, -1), "uncategorized is first")
+         ctx:assert_equals("Ore", TravelTools.step_category(pindex, b, 1), "uncategorized to the first category")
+         ctx:assert_equals("Wood", TravelTools.step_category(pindex, a, 1), "Ore to Wood")
+         ctx:assert_equals(nil, TravelTools.step_category(pindex, a, 1), "Wood is last")
          ctx:assert_equals("Ore", TravelTools.step_category(pindex, a, -1), "back to Ore")
+         ctx:assert_equals(false, TravelTools.step_category(pindex, b, -1), "the first category to uncategorized")
 
+         TravelTools.delete_point(pindex, z)
          TravelTools.set_category(pindex, a, nil)
          TravelTools.set_category(pindex, c, nil)
          ctx:assert_equals(0, #TravelTools.all_category_names(pindex), "an empty category is forgotten")

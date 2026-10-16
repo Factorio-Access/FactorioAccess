@@ -300,11 +300,9 @@ local function tabstops(pindex)
    for _, surface in ipairs(TravelTools.surfaces(pindex)) do
       local index = surface.index
       local tabs = { tab(index, "all", { "fa.travel-tab-all" }) }
-      local categories, uncategorized = TravelTools.categories_on(pindex, index)
-      for _, c in ipairs(categories) do
+      for _, c in ipairs(TravelTools.categories_on(pindex, index)) do
          table.insert(tabs, tab(index, c.id, c.name))
       end
-      if uncategorized then table.insert(tabs, tab(index, "uncategorized", { "fa.travel-uncategorized" })) end
       table.insert(out, { name = "s" .. index, title = TravelTools.surface_name(surface), tabs = tabs })
    end
    return out
