@@ -285,6 +285,12 @@ function BuildLock.set_enabled(pindex, enabled, silent, reason)
    end
 end
 
+---@param pindex integer
+---@return boolean
+function BuildLock.is_enabled(pindex)
+   return build_lock_storage[pindex].enabled
+end
+
 ---Toggles build lock for a player
 ---@param pindex integer
 function BuildLock.toggle(pindex)

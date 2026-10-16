@@ -158,6 +158,7 @@ For most buildings build lock places them as close together as possible, facing 
 
 - For transport belts, the belts are set up to face the way you are moving, and will properly form corners
 - For electric poles, each pole is placed the maximum distance from the last pole.
+- For pipe to ground, moving in a straight line lays pairs as long as they can reach, each exit followed by the next entrance so they connect. When something is in the way the exit comes back to the nearest place where it and the next entrance both fit. Turning turns build lock off, since a pair cannot turn and a corner needs a plain pipe. When you stop, the last entrance is still open: place its exit yourself.
 
 It is important to note that you are effectively running two build locks at the same time.  One is on the cursor, and one is on the character.  So for example if you move the cursor east while running west, you'll get a line of belts going east from where the cursor started and a second line going west from where the character started.  These are entirely independent.  best practice is to use only one or the other.
 

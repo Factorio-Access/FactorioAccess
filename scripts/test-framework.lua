@@ -62,6 +62,7 @@ local test_files = {
    "coupling-test", -- Ctrl+G and Shift+G couple and uncouple train cars
    "ghost-on-water-test", -- A belt ghost on a landfill ghost, and the skip along such ghosts over water
    "fast-travel-test", -- Fast travel storage: conversion, order, dragging, categories, surface deletion
+   "build-lock-pipe-to-ground-test", -- Build lock lays chained pipe to ground pairs
    "remote-view-test", -- Alt+I: entering and leaving remote view, its announcements
    "bottlenecks-test", -- Sampling what crafting machines lack, and the analyzer
 }
