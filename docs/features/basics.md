@@ -193,6 +193,8 @@ Points stay in the order you put them in: `shift + w` and `shift + s` drag a poi
 
 For larger distances, the mod offers cursor skipping.  Holding `shift` plus the cursor movement keys will move up to 100 tiles in any given direction, stopping at the first "change".  Change is somewhat ill-defined.  Examples which count include water to ground, belt corners, and rows of entities beginning or ending.
 
+On an underground belt or a pipe to ground, skipping toward the other end of its pair jumps straight to that end, so you can follow an underground line one pair at a time.  Skipping the other way, or on an end with no partner, is an ordinary skip.
+
 Many entities are larger than 1x1 and moving 3 tiles to place the next one is annoying.  For this reason we also offer skip by preview.  `ctrl + WASD` moves the cursor so that, if you built the item, it would form a perfect row or column.  For example an assembling machine is 3x3, so pressing `ctrl + d` would move you 3 tiles east. This also works on blueprints.
 
 ### Larger Cursors and Placing Tiles

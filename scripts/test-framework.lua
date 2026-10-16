@@ -63,6 +63,7 @@ local test_files = {
    "ghost-on-water-test", -- A belt ghost on a landfill ghost, and the skip along such ghosts over water
    "fast-travel-test", -- Fast travel storage: conversion, order, dragging, categories, surface deletion
    "build-lock-pipe-to-ground-test", -- Build lock lays chained pipe to ground pairs
+   "cursor-skip-underground-test", -- Shift+WASD jumps to the other end of an underground pair
    "remote-view-test", -- Alt+I: entering and leaving remote view, its announcements
    "bottlenecks-test", -- Sampling what crafting machines lack, and the analyzer
 }
