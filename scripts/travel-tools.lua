@@ -2,11 +2,13 @@
 Fast travel points: per player, each on a surface and in at most one category.
 
 Points are kept apart from their order. `points` holds them by ID; `order` holds, per surface, the IDs in the order
-the player arranged them (new points go in by name, dragging moves them); `categories` holds category names by ID.
-A category exists while a point is in it. A surface's points go with the surface (on_pre_surface_deleted), so a
-stored surface index never outlives its surface and can safely be reused by the game.
+the player arranged them (new points go in by name, dragging moves them); `categories` holds category names by ID, and
+`category_order` their IDs in the order the player arranged them (a new category goes last). A category exists while a
+point is in it. A surface's points go with the surface (on_pre_surface_deleted), so a stored surface index never
+outlives its surface and can safely be reused by the game.
 
-The storage format changed in migrations/2026-10-13-fast-travel-surfaces-and-categories.lua.
+The storage format changed in migrations/2026-10-13-fast-travel-surfaces-and-categories.lua and
+migrations/2026-10-17-fast-travel-category-order.lua.
 ]]
 local FaUtils = require("scripts.fa-utils")
 local Graphics = require("scripts.graphics")
@@ -33,12 +35,14 @@ local mod = {}
 ---@class fa.travel.TravelStorage
 ---@field points table<integer, fa.travel.TravelPoint>
 ---@field categories table<integer, string>
+---@field category_order integer[] Category IDs
 ---@field order table<integer, integer[]> Surface index to point IDs
 
 ---@type table<integer, fa.travel.TravelStorage>
 local travel_storage = StorageManager.declare_storage_module("fast_travel", {
    points = {},
    categories = {},
+   category_order = {},
    order = {},
 })
 
@@ -70,6 +74,30 @@ local function forget_empty_categories(state)
    for id in pairs(state.categories) do
       if not used[id] then state.categories[id] = nil end
    end
+   for i = #state.category_order, 1, -1 do
+      if not state.categories[state.category_order[i]] then table.remove(state.category_order, i) end
+   end
+end
+
+---Move `id` to just before (direction -1) or after (1) `neighbour` in `ids`.
+---@param ids integer[]
+---@param id integer
+---@param neighbour integer
+---@param direction 1|-1
+local function move_next_to(ids, id, neighbour, direction)
+   for i, other in ipairs(ids) do
+      if other == id then
+         table.remove(ids, i)
+         break
+      end
+   end
+   for i, other in ipairs(ids) do
+      if other == neighbour then
+         table.insert(ids, direction == -1 and i or i + 1, id)
+         return
+      end
+   end
+   error("the neighbour is in the same list")
 end
 
 ---Where a point named `label` goes: the first place between a name before it and a name after it.
@@ -146,36 +174,70 @@ function mod.points(pindex, surface_index, filter)
    return out
 end
 
----The categories with points on a surface, by name.
+---Every category's ID in the player's order (or by name, with the legacy setting).
+---@param pindex integer
+---@return integer[]
+local function ordered_categories(pindex)
+   local state = travel_storage[pindex]
+   local ids = {}
+   for _, id in ipairs(state.category_order) do
+      table.insert(ids, id)
+   end
+   if sorted_by_name(pindex) then
+      table.sort(ids, function(a, b)
+         return state.categories[a] < state.categories[b]
+      end)
+   end
+   return ids
+end
+
+---The categories with points on a surface, in the player's order.
 ---@param pindex integer
 ---@param surface_index integer
 ---@return { id: integer, name: string }[]
 function mod.categories_on(pindex, surface_index)
    local state = travel_storage[pindex]
-   local seen, out = {}, {}
+   local used, out = {}, {}
    for _, id in ipairs(state.order[surface_index] or {}) do
       local category = state.points[id].category
-      if category and not seen[category] then
-         seen[category] = true
-         table.insert(out, { id = category, name = state.categories[category] })
-      end
+      if category then used[category] = true end
    end
-   table.sort(out, function(a, b)
-      return a.name < b.name
-   end)
+   for _, id in ipairs(ordered_categories(pindex)) do
+      if used[id] then table.insert(out, { id = id, name = state.categories[id] }) end
+   end
    return out
 end
 
----Every category's name, sorted, for choosing one.
+---Every category's name, in the player's order, for choosing one.
 ---@param pindex integer
 ---@return string[]
 function mod.all_category_names(pindex)
+   local state = travel_storage[pindex]
    local out = {}
-   for _, name in pairs(travel_storage[pindex].categories) do
-      table.insert(out, name)
+   for _, id in ipairs(ordered_categories(pindex)) do
+      table.insert(out, state.categories[id])
    end
-   table.sort(out)
    return out
+end
+
+---Swap a category with its neighbour among those on a surface (the menu's tabs), in the player's order.
+---@param pindex integer
+---@param surface_index integer
+---@param id integer
+---@param direction 1|-1
+---@return integer? position Its new place among the surface's categories; nil at the edge
+---@return integer count How many categories the surface has
+function mod.move_category(pindex, surface_index, id, direction)
+   local visible = mod.categories_on(pindex, surface_index)
+   for i, c in ipairs(visible) do
+      if c.id == id then
+         local neighbour = visible[i + direction]
+         if not neighbour then return nil, #visible end
+         move_next_to(travel_storage[pindex].category_order, id, neighbour.id, direction)
+         return i + direction, #visible
+      end
+   end
+   error("the category is on the surface")
 end
 
 ---The surfaces to show, in a stable order: the base game's planets, other surfaces by name, then platforms by name.
@@ -294,13 +356,14 @@ function mod.set_category(pindex, id, name)
       if not found then
          found = UID.uid()
          state.categories[found] = name
+         table.insert(state.category_order, found)
       end
       point.category = found
    end
    forget_empty_categories(state)
 end
 
----The categories a point steps through with shift+a/d: uncategorized, then its surface's occupied ones by name.
+---The categories a point steps through with shift+a/d: uncategorized, then its surface's occupied ones in order.
 ---Uncategorized comes first as the menu's tabs do: all, where a new uncategorized point is made, then the categories.
 ---Returns the name it moved to, or nil at either end.
 ---@param pindex integer
@@ -344,20 +407,8 @@ function mod.drag_point(pindex, id, direction, visible)
       if p.id == id then neighbour = visible[i + direction] end
    end
    if not neighbour then return false end
-   local ids = state.order[point.surface_index]
-   for i, other in ipairs(ids) do
-      if other == id then
-         table.remove(ids, i)
-         break
-      end
-   end
-   for i, other in ipairs(ids) do
-      if other == neighbour.id then
-         table.insert(ids, direction == -1 and i or i + 1, id)
-         return true
-      end
-   end
-   error("the neighbour is on the same surface")
+   move_next_to(state.order[point.surface_index], id, neighbour.id, direction)
+   return true
 end
 
 ---Go to a point: teleport on the character's surface, remote view of another.

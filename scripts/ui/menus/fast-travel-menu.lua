@@ -2,7 +2,8 @@
 Fast travel menu: a section per surface (ctrl+tab), a tab per category within it (tab), a row per point.
 
 Sections and tabs come from TravelTools in a stable order; the menu opens on the player's own surface. Tab names are
-stable identities (surface index and category ID), so a tab keeps its place in the list while the player works in it.
+stable identities (surface index and category ID), so the menu stays on a tab while the player works in it, also when m
+and period move its category.
 ]]
 local FaUtils = require("scripts.fa-utils")
 local Graphics = require("scripts.graphics")
@@ -34,6 +35,44 @@ local function move_cursor_to(pindex, point, ctx)
    ctx.message:fragment({ "fa.travel-cursor-moved-to", point.label })
 end
 
+---@param pindex integer
+---@return boolean
+local function sorted_by_name(pindex)
+   return settings.get_player_settings(pindex)[SettingDecls.SETTING_NAMES.FAST_TRAVEL_SORT_BY_NAME].value --[[@as boolean]]
+end
+
+---Keys that act on the tab from any of its rows: m and period move its category a tab earlier or later.
+---@param pindex integer
+---@param surface_index integer
+---@param filter fa.travel.Filter
+---@return table
+local function tab_handlers(pindex, surface_index, filter)
+   local function move(direction)
+      return function(ctx)
+         if type(filter) ~= "number" then
+            UiSounds.play_ui_edge(pindex)
+         elseif sorted_by_name(pindex) then
+            UiSounds.play_ui_edge(pindex)
+            ctx.message:fragment({ "fa.travel-move-category-sorted-by-name" })
+         else
+            local at, count = TravelTools.move_category(pindex, surface_index, filter, direction)
+            if not at then
+               UiSounds.play_ui_edge(pindex)
+            else
+               -- The first tab is not a category
+               ctx.message:fragment({
+                  "fa.travel-category-moved",
+                  TravelTools.category_name(pindex, filter),
+                  at + 1,
+                  count + 1,
+               })
+            end
+         end
+      end
+   end
+   return { on_action1 = move(-1), on_action3 = move(1) }
+end
+
 ---Keys that act on a point from any cell of its row: drag it, step its category, delete it.
 ---@param pindex integer
 ---@param point fa.travel.TravelPoint
@@ -43,7 +82,7 @@ end
 local function row_handlers(pindex, point, visible, filter)
    local function drag(direction)
       return function(ctx)
-         if settings.get_player_settings(pindex)[SettingDecls.SETTING_NAMES.FAST_TRAVEL_SORT_BY_NAME].value then
+         if sorted_by_name(pindex) then
             UiSounds.play_ui_edge(pindex)
             ctx.message:fragment({ "fa.travel-drag-sorted-by-name" })
          elseif not TravelTools.drag_point(pindex, point.id, direction, visible) then
@@ -107,10 +146,11 @@ local function render(ctx, surface_index, filter)
 
    local builder = Menu.MenuBuilder.new()
    local points = TravelTools.points(pindex, surface_index, filter)
+   local tab_keys = tab_handlers(pindex, surface_index, filter)
 
    for _, point in ipairs(points) do
       local id = point.id
-      local keys = row_handlers(pindex, point, points, filter)
+      local keys = with(row_handlers(pindex, point, points, filter), tab_keys)
       builder:start_row("travelpoint")
 
       builder:add_clickable(
@@ -187,7 +227,6 @@ local function render(ctx, surface_index, filter)
             local name = TravelTools.category_name(pindex, point.category)
             label_ctx.message:fragment(name or { "fa.travel-uncategorized" })
             label_ctx.message:fragment({ "fa.travel-category" })
-            label_ctx.message:list_item_forced_comma({ "fa.travel-category-hint" })
          end,
          with(keys, {
             on_click = function(click_ctx)
@@ -196,10 +235,6 @@ local function render(ctx, surface_index, filter)
                   {},
                   { node = "category-" .. id }
                )
-            end,
-            on_action1 = function(click_ctx)
-               click_ctx.controller:open_textbox("", { node = "category-" .. id })
-               click_ctx.message:fragment({ "fa.travel-enter-category" })
             end,
             on_clear = function(click_ctx)
                TravelTools.set_category(pindex, id, nil)
@@ -250,19 +285,23 @@ local function render(ctx, surface_index, filter)
 
    -- New points are made at the cursor, which is on the player's surface: only offered there
    if here then
-      builder:add_clickable("create-new", { "fa.travel-menu-create-new" }, {
-         on_click = function(click_ctx)
-            click_ctx.controller:open_textbox("", "create-new")
-            click_ctx.message:fragment({ "fa.travel-enter-name" })
-         end,
-         on_child_result = function(click_ctx, result)
-            if result and result ~= "" then
-               local category = type(filter) == "number" and TravelTools.category_name(pindex, filter) or nil
-               TravelTools.create_point(pindex, result, surface_index, vp:get_cursor_pos(), category)
-               click_ctx.message:fragment({ "fa.travel-point-created", result })
-            end
-         end,
-      })
+      builder:add_clickable(
+         "create-new",
+         { "fa.travel-menu-create-new" },
+         with(tab_keys, {
+            on_click = function(click_ctx)
+               click_ctx.controller:open_textbox("", "create-new")
+               click_ctx.message:fragment({ "fa.travel-enter-name" })
+            end,
+            on_child_result = function(click_ctx, result)
+               if result and result ~= "" then
+                  local category = type(filter) == "number" and TravelTools.category_name(pindex, filter) or nil
+                  TravelTools.create_point(pindex, result, surface_index, vp:get_cursor_pos(), category)
+                  click_ctx.message:fragment({ "fa.travel-point-created", result })
+               end
+            end,
+         })
+      )
    elseif #points == 0 then
       -- A tab whose last point just left: it is gone from the list at the next key
       builder:add_label("empty", { "fa.travel-no-points" })

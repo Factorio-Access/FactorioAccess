@@ -1,6 +1,9 @@
+local EventManager = require("scripts.event-manager")
 local TestRegistry = require("scripts.test-registry")
 local TravelTools = require("scripts.travel-tools")
+local UiRouter = require("scripts.ui.router")
 local convert = require("scripts.migration-steps.fast-travel-surfaces-and-categories")
+local convert_category_order = require("scripts.migration-steps.fast-travel-category-order")
 local describe, it = TestRegistry.describe, TestRegistry.it
 
 ---@param pindex integer
@@ -13,6 +16,34 @@ local function labels(pindex, surface_index, filter)
       table.insert(out, p.label)
    end
    return table.concat(out, ",")
+end
+
+---@param pindex integer
+---@param surface_index integer
+---@return string
+local function category_names(pindex, surface_index)
+   local out = {}
+   for _, c in ipairs(TravelTools.categories_on(pindex, surface_index)) do
+      table.insert(out, c.name)
+   end
+   return table.concat(out, ",")
+end
+
+---A key as the player presses it.
+---@param key string
+local function press(key)
+   EventManager.mock_event(key, { player_index = 1 })
+end
+
+---@param element LuaGuiElement
+---@return LuaGuiElement?
+local function find_textbox(element)
+   if element.name == "fa-text-input" then return element end
+   for _, child in ipairs(element.children) do
+      local found = find_textbox(child)
+      if found then return found end
+   end
+   return nil
 end
 
 ---@param pindex integer
@@ -42,6 +73,11 @@ describe("Fast travel", function()
          ctx:assert_equals(nil, next(convert({ points = {} }, 1).order), "nothing to order")
          ctx:assert_equals(nil, next(convert(old, nil).points), "without Nauvis, dropped")
          ctx:assert(not pcall(convert, new --[[@as any]], 1), "refuses data already converted")
+
+         local ordered = convert_category_order({ points = {}, categories = { [5] = "Wood", [9] = "Ore" }, order = {} })
+         ctx:assert_equals(9, ordered.category_order[1], "categories in the order they were shown, by name")
+         ctx:assert_equals(5, ordered.category_order[2], "categories in the order they were shown, by name")
+         ctx:assert(not pcall(convert_category_order, ordered --[[@as any]]), "refuses data already converted")
       end)
    end)
 
@@ -62,12 +98,13 @@ describe("Fast travel", function()
          ctx:assert(not TravelTools.drag_point(pindex, a, -1, TravelTools.points(pindex, s, "all")), "a is first")
 
          -- Out of order now: a new point goes where it fits between its neighbours' names
-         TravelTools.create_point(pindex, "bb", s, { x = 0, y = 0 })
+         local bb = TravelTools.create_point(pindex, "bb", s, { x = 0, y = 0 })
          ctx:assert_equals("a,bb,c,b", labels(pindex, s, "all"), "the first place that fits, between a and c")
 
          TravelTools.set_category(pindex, a, "Ore")
          TravelTools.set_category(pindex, c, "Ore")
-         ctx:assert_equals("a,c", labels(pindex, s, assert(TravelTools.get_point(pindex, a).category)), "the Ore tab")
+         local ore = assert(TravelTools.get_point(pindex, a).category)
+         ctx:assert_equals("a,c", labels(pindex, s, ore), "the Ore tab")
          local z = TravelTools.create_point(pindex, "z", s, { x = 0, y = 0 }, "Wood")
          local wood = assert(TravelTools.get_point(pindex, z).category)
 
@@ -88,6 +125,37 @@ describe("Fast travel", function()
          ctx:assert_equals("Ore", TravelTools.step_category(pindex, a, -1), "back to Ore")
          ctx:assert_equals(false, TravelTools.step_category(pindex, b, -1), "the first category to uncategorized")
 
+         -- A new category goes last, not by name, and moves among the surface's categories
+         TravelTools.set_category(pindex, bb, "Apple")
+         ctx:assert_equals("Ore,Wood,Apple", category_names(pindex, s), "Apple goes last")
+         local apple = assert(TravelTools.get_point(pindex, bb).category)
+         local at, count = TravelTools.move_category(pindex, s, apple, -1)
+         ctx:assert_equals(2, at, "moved to second")
+         ctx:assert_equals(3, count, "of three")
+         ctx:assert_equals("Ore,Apple,Wood", category_names(pindex, s), "the tabs")
+         ctx:assert_equals("Ore,Apple,Wood", table.concat(TravelTools.all_category_names(pindex), ","), "the chooser")
+         ctx:assert_equals(nil, (TravelTools.move_category(pindex, s, ore, -1)), "Ore is first")
+         ctx:assert_equals("Apple", TravelTools.step_category(pindex, a, 1), "stepping follows the order: Ore to Apple")
+         TravelTools.set_category(pindex, a, "Ore")
+
+         -- A category on another surface is not a tab here, and is passed over
+         local other = game.create_surface("fast-travel-order-test").index
+         TravelTools.create_point(pindex, "far", other, { x = 0, y = 0 }, "Far")
+         ctx:assert_equals(nil, (TravelTools.move_category(pindex, s, wood, 1)), "Wood is last here")
+         ctx:assert_equals(
+            "Ore,Apple,Wood,Far",
+            table.concat(TravelTools.all_category_names(pindex), ","),
+            "Far is last"
+         )
+         game.get_player(pindex).mod_settings["fa-fast-travel-sort-by-name"] = { value = true }
+         ctx:assert_equals("Apple,Ore,Wood", category_names(pindex, s), "the legacy setting sorts categories by name")
+         game.get_player(pindex).mod_settings["fa-fast-travel-sort-by-name"] = { value = false }
+         for _, p in ipairs(TravelTools.points(pindex, other, "all")) do
+            TravelTools.delete_point(pindex, p.id)
+         end
+         game.delete_surface(other)
+         TravelTools.set_category(pindex, bb, nil)
+
          TravelTools.delete_point(pindex, z)
          TravelTools.set_category(pindex, a, nil)
          TravelTools.set_category(pindex, c, nil)
@@ -97,6 +165,47 @@ describe("Fast travel", function()
          ctx:assert_equals("a,b,bb,c", labels(pindex, s, "all"), "the legacy setting sorts by name")
          game.get_player(pindex).mod_settings["fa-fast-travel-sort-by-name"] = { value = false }
          ctx:assert_equals("c,a,bb,b", labels(pindex, s, "all"), "and the arranged order is kept")
+         clear(pindex)
+      end)
+   end)
+
+   it("moves categories and makes new ones from the menu", function(ctx)
+      ctx:init(function()
+         local pindex = 1
+         local s = assert(game.get_player(pindex)).surface.index
+         clear(pindex)
+         game.get_player(pindex).mod_settings["fa-fast-travel-sort-by-name"] = { value = false }
+         local first = TravelTools.create_point(pindex, "first", s, { x = 0, y = 0 }, "One")
+         TravelTools.create_point(pindex, "second", s, { x = 0, y = 0 }, "Two")
+
+         local router = UiRouter.get_router(pindex)
+         router:open_ui(UiRouter.UI_NAMES.TRAVEL)
+         press("fa-m")
+         ctx:assert_equals("One,Two", category_names(pindex, s), "m on the all tab moves nothing")
+         press("fa-tab")
+         press("fa-dot")
+         ctx:assert_equals("Two,One", category_names(pindex, s), "period moves One later")
+         press("fa-dot")
+         ctx:assert_equals("Two,One", category_names(pindex, s), "One is last")
+         press("fa-m")
+         ctx:assert_equals("One,Two", category_names(pindex, s), "the menu stayed on One, and m moves it back")
+
+         -- On One's only row: the category cell, its chooser, and new category at the end
+         for _ = 1, 4 do
+            press("fa-d")
+         end
+         press("fa-leftbracket")
+         ctx:assert(router:is_ui_open(UiRouter.UI_NAMES.TRAVEL_CATEGORY_SELECTOR), "the chooser is open")
+         press("fa-c-s")
+         press("fa-leftbracket")
+         local textbox = assert(find_textbox(assert(game.get_player(pindex)).gui.screen), "asks for a name")
+         textbox.text = "Fresh"
+         EventManager.mock_event(defines.events.on_gui_confirmed, { player_index = pindex, element = textbox })
+         ctx:assert_equals("Fresh", TravelTools.category_name(pindex, TravelTools.get_point(pindex, first).category))
+         ctx:assert(not router:is_ui_open(UiRouter.UI_NAMES.TRAVEL_CATEGORY_SELECTOR), "the chooser closed")
+         ctx:assert(router:is_ui_open(UiRouter.UI_NAMES.TRAVEL), "back in the menu")
+         ctx:assert_equals("Two,Fresh", category_names(pindex, s), "a new category goes last")
+         router:close_ui()
          clear(pindex)
       end)
    end)

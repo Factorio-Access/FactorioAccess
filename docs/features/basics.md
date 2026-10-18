@@ -184,9 +184,9 @@ You can use rulers to quickly place large numbers of items.  For example, to pla
 
 Fast travel has a section per surface, planets first, then any other surfaces, then space platforms, each by name. Use `control + tab` to move between them; the menu opens on the surface you are on. A surface has a section once it has a point, and a space platform's points go when it is deleted. Travelling to a point on another surface opens remote view there instead of teleporting.
 
-Within a surface, `tab` moves between categories: "all", then each category with points there. Points without a category are only in "all". A point's category control takes `m` to type a category, new or existing, or click to pick one, and `backspace` makes it uncategorized. `shift + a` and `shift + d` step a point to the previous or next category on its surface, in the order of the tabs: uncategorized comes before the first category.
+Within a surface, `tab` moves between categories: "all", then each category with points there, in the order you put them in. From any row, `m` and `.` move the current tab's category one tab earlier or later; a new category goes last. Points without a category are only in "all". Click a point's category control to pick a category, or "new category" at the end of the list to type a name; `backspace` makes it uncategorized. `shift + a` and `shift + d` step a point to the previous or next category on its surface, in the order of the tabs: uncategorized comes before the first category.
 
-Points stay in the order you put them in: `shift + w` and `shift + s` drag a point up and down, and a new point goes in by name. To keep them sorted by name instead, turn on "Sort fast travel points by name" in the game's Mod settings, on the Per player tab: from the main menu for every new game, or from a game's Settings for that save.
+Points stay in the order you put them in: `shift + w` and `shift + s` drag a point up and down, and a new point goes in by name. To keep points and categories sorted by name instead, turn on "Sort fast travel points by name" in the game's Mod settings, on the Per player tab: from the main menu for every new game, or from a game's Settings for that save.
 
 
 ### Cursor Skipping
