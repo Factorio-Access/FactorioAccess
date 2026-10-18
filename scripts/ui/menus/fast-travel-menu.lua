@@ -1,5 +1,6 @@
 --[[
-Fast travel menu: a section per surface (ctrl+tab), a tab per category within it (tab), a row per point.
+Fast travel menu: a section per surface (ctrl+tab), a tab per category within it (tab), a row per point. The first tab
+is the points without a category, and the menu opens on it: what the player has not filed away is what they use most.
 
 Sections and tabs come from TravelTools in a stable order; the menu opens on the player's own surface. Tab names are
 stable identities (surface index and category ID), so the menu stays on a tab while the player works in it, also when m
@@ -157,9 +158,6 @@ local function render(ctx, surface_index, filter)
          "point-" .. id,
          function(label_ctx)
             label_ctx.message:fragment(point.label)
-            if filter == "all" and point.category then
-               label_ctx.message:list_item(TravelTools.category_name(pindex, point.category))
-            end
             label_ctx.message:list_item(FaUtils.format_position(point.position.x, point.position.y))
             if point.description ~= "" then label_ctx.message:list_item(point.description) end
          end,
@@ -338,7 +336,7 @@ local function tabstops(pindex)
    local out = {}
    for _, surface in ipairs(TravelTools.surfaces(pindex)) do
       local index = surface.index
-      local tabs = { tab(index, "all", { "fa.travel-tab-all" }) }
+      local tabs = { tab(index, "uncategorized", { "fa.travel-uncategorized" }) }
       for _, c in ipairs(TravelTools.categories_on(pindex, index)) do
          table.insert(tabs, tab(index, c.id, c.name))
       end
@@ -351,7 +349,7 @@ mod.fast_travel_menu_tabs = TabList.declare_tablist({
    ui_name = UiRouter.UI_NAMES.TRAVEL,
    tabs_callback = tabstops,
    initial_tab = function(pindex)
-      return tab_name(assert(game.get_player(pindex)).surface.index, "all")
+      return tab_name(assert(game.get_player(pindex)).surface.index, "uncategorized")
    end,
 })
 

@@ -46,8 +46,8 @@ local travel_storage = StorageManager.declare_storage_module("fast_travel", {
    order = {},
 })
 
----A tab's filter: every point, or one category's
----@alias fa.travel.Filter "all"|integer
+---Which points: every one, those without a category, or one category's
+---@alias fa.travel.Filter "all"|"uncategorized"|integer
 
 -- The base game's planets, in the order the game lists them; other surfaces follow by name
 local BASE_PLANETS = { nauvis = 1, vulcanus = 2, gleba = 3, fulgora = 4, aquilo = 5 }
@@ -153,7 +153,9 @@ end
 ---@param filter fa.travel.Filter
 ---@return boolean
 local function passes(point, filter)
-   return filter == "all" or point.category == filter
+   if filter == "all" then return true end
+   if filter == "uncategorized" then return point.category == nil end
+   return point.category == filter
 end
 
 ---A surface's points that pass the filter, in the player's order (or by name, with the legacy setting).
@@ -364,7 +366,7 @@ function mod.set_category(pindex, id, name)
 end
 
 ---The categories a point steps through with shift+a/d: uncategorized, then its surface's occupied ones in order.
----Uncategorized comes first as the menu's tabs do: all, where a new uncategorized point is made, then the categories.
+---This is the order of the menu's tabs.
 ---Returns the name it moved to, or nil at either end.
 ---@param pindex integer
 ---@param id integer
