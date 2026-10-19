@@ -30,7 +30,7 @@ permissions:
 
 # One run per ref at a time. A newer push cancels the older run outright: for a rolling `ci-latest` the older build is
 # worthless, and two publish steps racing each other could otherwise republish the OLDER commit last (a rollback) or
-# collide inside the delete-then-create window. Tags and PRs get their own groups, so a `v*` release run is never
+# swap files in the same release at once. Tags and PRs get their own groups, so a `v*` release run is never
 # cancelled by a branch push.
 concurrency:
   group: build-${{ github.ref }}
@@ -171,11 +171,23 @@ jobs:
             echo "ci-latest is at ${existing::7}, which is newer than ${GITHUB_SHA::7}; leaving it alone"
             exit 0
           fi
-          gh release delete ci-latest --yes --cleanup-tag || true
-          gh release create ci-latest "dist/mod-zip/${{ needs.mod-zip.outputs.zip_name }}" dist/native/fa-native.zip \
-            dist/native/fa_native.pdb dist/FactorioAccessInstaller/FactorioAccessInstaller.exe \
-            --prerelease --target "$GITHUB_SHA" --title "Latest CI build" \
-            --notes "Automatic build of $CI_LATEST_BRANCH at ${GITHUB_SHA::7}. Untested; the installer lists it last. Tagged releases are the ones to use."
+          assets=("dist/mod-zip/${{ needs.mod-zip.outputs.zip_name }}" dist/native/fa-native.zip \
+            dist/native/fa_native.pdb dist/FactorioAccessInstaller/FactorioAccessInstaller.exe)
+          notes="Automatic build of $CI_LATEST_BRANCH at ${GITHUB_SHA::7}. Untested; the installer lists it last. Tagged releases are the ones to use."
+          if [[ -z "$existing" ]]; then
+            gh release create ci-latest "${assets[@]}" --prerelease --target "$GITHUB_SHA" --title "Latest CI build" --notes "$notes"
+            exit 0
+          fi
+          # Publishing a new release notifies everyone watching releases, so the one release is refreshed in place:
+          # hidden as a draft while its files are swapped (nobody downloads a mod zip and DLLs from different
+          # commits), the tag moved, then shown again. Showing a release that was published before sends nothing.
+          gh release edit ci-latest --draft=true
+          for name in $(gh release view ci-latest --json assets -q '.assets[].name'); do
+            gh release delete-asset ci-latest "$name" --yes
+          done
+          gh release upload ci-latest "${assets[@]}"
+          git push --force origin "$GITHUB_SHA:refs/tags/ci-latest"
+          gh release edit ci-latest --draft=false --prerelease --target "$GITHUB_SHA" --notes "$notes"
 
   # The only job that sees FACTORIO_UPLOAD_API_KEY. The job-level `if` keeps every non-tag event out entirely; the gate
   # step then requires refs/tags/vX.Y.Z exactly, equal to info.json's version; the upload step re-verifies the zip
