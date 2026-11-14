@@ -101,14 +101,26 @@ if(APPLE)
 # --- the injected library: loaded into the game with DYLD_INSERT_LIBRARIES (tools/mac/launch.sh) ---
 # entry.cpp stays last: its initializer starts everything, and initializers run in link order, so every other file's
 # globals are constructed by then.
+enable_language(OBJCXX)
+# prism (prebuilt, universal): weakly linked from next to libfa_native.dylib, so a missing copy costs the screen
+# reader plugins, not the whole library.
+set(PRISM_DIR ${CMAKE_SOURCE_DIR}/third_party/prism)
+set(PRISM_DYLIB ${PRISM_DIR}/macos/lib/libprism.dylib)
 add_library(fa_native SHARED
-  src/log.cpp src/mac/image.cpp src/mac/sym.cpp src/mac/layout.cpp src/mac/inline_hook.cpp src/mac/hooks.cpp src/mac/entry.cpp)
-target_include_directories(fa_native PRIVATE src ${CMAKE_BINARY_DIR}/generated)
-target_link_libraries(fa_native PRIVATE faui fa_update fa_audio)
+  src/log.cpp src/lua_native.cpp src/assets.cpp
+  src/mac/image.cpp src/mac/sym.cpp src/mac/layout.cpp src/mac/inline_hook.cpp src/mac/hooks.cpp src/mac/speech.mm src/mac/platform.mm
+  src/mac/entry.cpp)
+target_include_directories(fa_native PRIVATE src ${PRISM_DIR}/include ${CMAKE_BINARY_DIR}/generated)
+target_link_libraries(fa_native PRIVATE faui fa_update fa_audio "-framework AVFoundation" "-framework AppKit" "-framework Foundation"
+  "-framework CoreAudio" "-framework AudioToolbox")
+target_link_options(fa_native PRIVATE "LINKER:-weak_library,${PRISM_DYLIB}" "LINKER:-rpath,@loader_path")
+target_compile_options(fa_native PRIVATE $<$<COMPILE_LANGUAGE:OBJCXX>:-fobjc-arc>)
 set_target_properties(fa_native PROPERTIES PREFIX "lib" SUFFIX ".dylib")
+add_custom_command(TARGET fa_native POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PRISM_DYLIB} $<TARGET_FILE_DIR:fa_native>)
 
 # --- tests of the Mac layer's pure parts (the hook relocator, the field decoder) ---
-add_executable(fa_mac_tests tests_mac/main.cpp tests_mac/inline_hook_tests.cpp tests_mac/layout_tests.cpp
+add_executable(fa_mac_tests tests_mac/main.cpp tests_mac/inline_hook_tests.cpp tests_mac/layout_tests.cpp tests_mac/speech_audio_tests.cpp
   src/mac/inline_hook.cpp src/mac/layout.cpp src/log.cpp tests_mac/sym_stub.cpp)
 target_include_directories(fa_mac_tests PRIVATE src third_party)
 endif()

@@ -10,6 +10,9 @@
 #include "speech.h"
 #include "sym.h"
 #include "ui/rich_text.h"
+#if !defined(_WIN32)
+#include "mac/abi.h"
+#endif
 
 namespace fa::lua {
 namespace {
@@ -35,8 +38,9 @@ struct Api {
   const char* (*pushlstring)(lua_State*, const char*, size_t);
 } api;
 
+#if defined(_WIN32)
 // MSVC std::string, as returned by reference from the engine.
-struct MsvcString {
+struct GameString {
   union {
     char buf[16];
     const char* ptr;
@@ -45,12 +49,26 @@ struct MsvcString {
   size_t cap;
   std::string str() const { return std::string(cap > 15 ? ptr : buf, size); }
 };
+#else
+using GameString = mac::abi::String;  // the game's own libc++ std::string
+#endif
 
-// static LocalisedString LuaHelper::parseLocalisedString(lua_State*, int index, bool) -- returned by value
-// through a hidden first argument. The bool is what localised_print passes (true).
+constexpr size_t kLsBuffer = 256;
+// Room for a LocalisedString (its size is checked against the game's at init).
+struct LsBuffer {
+  alignas(16) unsigned char bytes[kLsBuffer];
+};
+
+// static LocalisedString LuaHelper::parseLocalisedString(lua_State*, int index, bool) -- returned by value. The bool
+// is what localised_print passes (true). MSVC passes the return slot as a hidden first argument; arm64 passes it in
+// x8, which is what a function returning a large struct is compiled to, so the Mac declares exactly that.
+#if defined(_WIN32)
 using Parse_t = void* (*)(void* out, lua_State*, int, bool);
+#else
+using Parse_t = LsBuffer (*)(lua_State*, int, bool);
+#endif
 // std::string const& LocalisedString::str(LocaleProvider const*) const
-using Str_t = const MsvcString* (*)(const void* self, const void* provider);
+using Str_t = const GameString* (*)(const void* self, const void* provider);
 using Dtor_t = void (*)(void* self);
 // LocaleProvider const* GlobalContext::getActiveLocaleProvider() const
 using Provider_t = const void* (*)(const void* global);
@@ -61,27 +79,30 @@ Dtor_t g_dtor;
 Provider_t g_provider;
 void* g_global_var;
 size_t g_ls_size;
-constexpr size_t kLsBuffer = 256;
 constexpr long long kApiVersion = 1;
 
-// Keeps the parsed LocalisedString's destructor on every exit path, Lua errors included.
+// Parses on construction and keeps the LocalisedString's destructor on every exit path, Lua errors included. A Lua
+// error during the parse is a C++ exception out of the constructor, so nothing is destroyed that was never built.
 struct ParsedLocalisedString {
-  alignas(16) unsigned char storage[kLsBuffer];
-  bool constructed = false;
-  ~ParsedLocalisedString() {
-    if (constructed) g_dtor(storage);
-  }
+#if defined(_WIN32)
+  LsBuffer ls;
+  ParsedLocalisedString(lua_State* L, int index) { g_parse(ls.bytes, L, index, true); }
+#else
+  LsBuffer ls;  // initialised from the call's result, which is built in place (the x8 slot is this member)
+  ParsedLocalisedString(lua_State* L, int index) : ls(g_parse(L, index, true)) {}
+#endif
+  ~ParsedLocalisedString() { g_dtor(ls.bytes); }
+  ParsedLocalisedString(const ParsedLocalisedString&) = delete;
+  ParsedLocalisedString& operator=(const ParsedLocalisedString&) = delete;
 };
 
 // The thread the mod's Lua runs on, noted by each call into the native code, for the watchdog.
 std::atomic<unsigned long> g_script_tid;
 
 std::string localise(lua_State* L, int index) {
-  ParsedLocalisedString ls;
-  g_parse(ls.storage, L, index, true);  // raises a Lua error for a malformed localised string
-  ls.constructed = true;
+  ParsedLocalisedString parsed(L, index);  // raises a Lua error for a malformed localised string
   const void* provider = g_provider(*reinterpret_cast<void**>(g_global_var));
-  return g_str(ls.storage, provider)->str();
+  return g_str(parsed.ls.bytes, provider)->str();
 }
 
 // _fa_native.speak(localised_string [, interrupt])
