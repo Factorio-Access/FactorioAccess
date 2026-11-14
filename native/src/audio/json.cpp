@@ -1,6 +1,11 @@
 #include "audio/json.h"
 #include <charconv>
 #include <format>
+#if defined(__APPLE__)
+#include <xlocale.h>
+#include <cstdlib>
+#include <string>
+#endif
 
 namespace fa::audio::json {
 
@@ -118,8 +123,17 @@ struct Parser {
     if (i >= s.size() || s[i] < '0' || s[i] > '9') return fail("invalid number");
     while (i < s.size() && ((s[i] >= '0' && s[i] <= '9') || s[i] == '.' || s[i] == 'e' || s[i] == 'E' || s[i] == '+' || s[i] == '-')) i++;
     double d = 0.0;
+#if defined(__APPLE__)
+    // Apple's libc++ has floating-point from_chars only from macOS 26; strtod in the C locale reads the same grammar.
+    static locale_t c_locale = newlocale(LC_NUMERIC_MASK, "C", nullptr);
+    std::string text(s.data() + start, i - start);
+    char* stop = nullptr;
+    d = strtod_l(text.c_str(), &stop, c_locale);
+    if (stop != text.c_str() + text.size()) {
+#else
     auto [end, ec] = std::from_chars(s.data() + start, s.data() + i, d);
     if (ec != std::errc() || end != s.data() + i) {
+#endif
       i = start;
       return fail("invalid number");
     }

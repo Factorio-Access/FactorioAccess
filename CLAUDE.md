@@ -369,6 +369,36 @@ code. Disassemble a function before guessing what it does.
 - `_fa_native` and the mod's package path are set up when the mod's Lua state is created. After a hot `reload`,
   load a save again (or `kill` and `launch`) before testing anything that goes through Lua or reads assets.
 
+### macOS (in progress, branch mac-native)
+
+The Mac layer is `native/src/mac/`; everything platform-free (`ui/`, `audio/`, `update/`) is shared. Stage 1 is done:
+the library loads, resolves the game's names, fields and virtual slots, and hooks the main loop and Lua state
+creation. Speech, the main menus, input and the rest are not ported yet.
+
+- The game (Steam, `~/Library/Application Support/Steam/steamapps/common/Factorio/factorio.app`) is native arm64,
+  clang + its own statically linked libc++ (Itanium ABI). Its hardened runtime allows `DYLD_INSERT_LIBRARIES`
+  and changing its code pages (`vm_protect` with `VM_PROT_COPY`), so nothing is re-signed.
+- Names: the executable's own symbol table, read in memory (`mac/image.cpp`), looked up by mangled-name prefix
+  (`mac/sym.cpp`), so no demangling at startup.
+- Fields: the shipped `factorio.dSYM` has line tables only, no types. `mac/layout.cpp` reads each field off a named
+  game function's arm64 code (a getter's load, a setter's store); every recipe names the instruction it came from.
+  The startup log compares them with the values read by hand off 2.1.24 and flags a mismatch.
+- Virtual slots: the method's address found in the class's vtable (`vtable for agui::Widget`).
+- Hooks: `mac/inline_hook.cpp`, four patched instructions and a relocating trampoline. Pure parts are tested in
+  `tests_mac/`.
+- The library's initializer runs before the game's `main()`. Initializers run in link order, so `mac/entry.cpp` stays
+  last in its CMake list.
+- The main loop steps about 1500 times a second on the Mac, far more than it draws: anything per-frame must not
+  assume one step is one frame.
+
+```bash
+cmake -S native -B native/build/mac -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo
+ninja -C native/build/mac
+native/build/mac/fa_mac_tests && native/build/mac/faui_tests && native/build/mac/fa_audio_tests
+native/tools/mac/launch.sh        # Steam running; log: ~/Library/Logs/FactorioAccess/native.log
+pkill -TERM -f MacOS/factorio     # the game quits cleanly on SIGTERM
+```
+
 ## Releases, CI and the installer
 
 **Native code and the installer never reach the mod portal.** The mod zip is built from a whitelist, not a

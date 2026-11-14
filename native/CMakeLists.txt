@@ -3,30 +3,28 @@ project(fa_native LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-if(NOT WIN32)
-  message(FATAL_ERROR "only the Windows platform layer exists so far")
+if(WIN32)
+  if(NOT MSVC)
+    message(FATAL_ERROR "the Windows build must use MSVC: the DLL calls into factorio.exe's MSVC ABI")
+  endif()
+  # Static CRT: players should not need a particular VC++ redistributable.
+  set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+  add_compile_definitions(WIN32_LEAN_AND_MEAN NOMINMAX _CRT_SECURE_NO_WARNINGS UNICODE _UNICODE)
+  # /EHsc matters beyond style: Factorio's Lua raises errors as C++ exceptions, which unwind through our frames.
+  add_compile_options(/utf-8 /W4 /permissive- /Zc:__cplusplus /EHsc)
+elseif(APPLE)
+  # The game runs natively on Apple silicon; its Intel slice under Rosetta is not supported.
+  if(NOT CMAKE_OSX_ARCHITECTURES)
+    set(CMAKE_OSX_ARCHITECTURES arm64 CACHE STRING "" FORCE)
+  endif()
+  # std::format with floating point needs macOS 13.3's libc++.
+  if(NOT CMAKE_OSX_DEPLOYMENT_TARGET)
+    set(CMAKE_OSX_DEPLOYMENT_TARGET 13.3 CACHE STRING "" FORCE)
+  endif()
+  add_compile_options(-Wall -Wextra -Wno-unused-parameter)
+else()
+  message(FATAL_ERROR "only the Windows and macOS platform layers exist so far")
 endif()
-if(NOT MSVC)
-  message(FATAL_ERROR "the Windows build must use MSVC: the DLL calls into factorio.exe's MSVC ABI")
-endif()
-# Static CRT: players should not need a particular VC++ redistributable.
-set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-add_compile_definitions(WIN32_LEAN_AND_MEAN NOMINMAX _CRT_SECURE_NO_WARNINGS UNICODE _UNICODE)
-# /EHsc matters beyond style: Factorio's Lua raises errors as C++ exceptions, which unwind through our frames.
-add_compile_options(/utf-8 /W4 /permissive- /Zc:__cplusplus /EHsc)
-
-# --- Microsoft Detours (vendored source) ---
-set(DETOURS_SRC ${CMAKE_SOURCE_DIR}/third_party/Detours/src)
-add_library(detours STATIC
-  ${DETOURS_SRC}/detours.cpp ${DETOURS_SRC}/modules.cpp ${DETOURS_SRC}/disasm.cpp
-  ${DETOURS_SRC}/image.cpp ${DETOURS_SRC}/creatwth.cpp)
-target_include_directories(detours PUBLIC ${DETOURS_SRC})
-target_compile_options(detours PRIVATE /W0)
-
-# --- prism speech (prebuilt; delay-loaded from next to fa_native.dll) ---
-set(PRISM_DIR ${CMAKE_SOURCE_DIR}/third_party/prism)
-set(PRISM_LIB ${PRISM_DIR}/windows/x64/lib/prism.lib)
-set(PRISM_DLL ${PRISM_DIR}/windows/x64/bin/prism.dll)
 
 # --- engine-free UI core: navigation graph, screens, input, message building (no Windows, no game types) ---
 file(GLOB FAUI_SOURCES CONFIGURE_DEPENDS src/ui/*.cpp)
@@ -56,6 +54,30 @@ configure_file(src/fa_version.h.in ${CMAKE_BINARY_DIR}/generated/fa_version.h @O
 file(WRITE ${CMAKE_BINARY_DIR}/version.txt "${FA_VERSION}
 ")
 
+# --- audio: the launcher's fa_launcher_audio ported in-process (miniaudio + JSON commands from the mod) ---
+set(MINIAUDIO_DIR ${CMAKE_SOURCE_DIR}/third_party/miniaudio)
+add_library(fa_audio STATIC
+  src/audio/audio.cpp src/audio/commands.cpp src/audio/json.cpp src/audio/panner_node.c src/audio/miniaudio_impl.c)
+target_include_directories(fa_audio PUBLIC src PRIVATE ${MINIAUDIO_DIR})
+add_executable(fa_audio_tests tests_audio/main.cpp tests_audio/commands_tests.cpp tests_audio/params_tests.cpp tests_audio/json_tests.cpp
+  tests_audio/engine_tests.cpp)
+target_include_directories(fa_audio_tests PRIVATE third_party)
+target_link_libraries(fa_audio_tests PRIVATE fa_audio)
+
+if(WIN32)
+# --- Microsoft Detours (vendored source) ---
+set(DETOURS_SRC ${CMAKE_SOURCE_DIR}/third_party/Detours/src)
+add_library(detours STATIC
+  ${DETOURS_SRC}/detours.cpp ${DETOURS_SRC}/modules.cpp ${DETOURS_SRC}/disasm.cpp
+  ${DETOURS_SRC}/image.cpp ${DETOURS_SRC}/creatwth.cpp)
+target_include_directories(detours PUBLIC ${DETOURS_SRC})
+target_compile_options(detours PRIVATE /W0)
+
+# --- prism speech (prebuilt; delay-loaded from next to fa_native.dll) ---
+set(PRISM_DIR ${CMAKE_SOURCE_DIR}/third_party/prism)
+set(PRISM_LIB ${PRISM_DIR}/windows/x64/lib/prism.lib)
+set(PRISM_DLL ${PRISM_DIR}/windows/x64/bin/prism.dll)
+
 # --- the injected DLL ---
 add_library(fa_native SHARED
   src/dllmain.cpp src/log.cpp src/input.cpp src/app.cpp src/assets.cpp src/lua_native.cpp src/screens/dialogs.cpp src/win/game.cpp src/win/audio_mute.cpp src/speech.cpp src/devserver.cpp
@@ -70,16 +92,23 @@ add_custom_command(TARGET fa_native POST_BUILD
 add_executable(fa_inject src/inject/main.cpp)
 target_link_libraries(fa_inject PRIVATE psapi)
 
-# --- audio: the launcher's fa_launcher_audio ported in-process (miniaudio + JSON commands from the mod) ---
-set(MINIAUDIO_DIR ${CMAKE_SOURCE_DIR}/third_party/miniaudio)
-add_library(fa_audio STATIC
-  src/audio/audio.cpp src/audio/commands.cpp src/audio/json.cpp src/audio/panner_node.c src/audio/miniaudio_impl.c)
-target_include_directories(fa_audio PUBLIC src PRIVATE ${MINIAUDIO_DIR})
-add_executable(fa_audio_tests tests_audio/main.cpp tests_audio/commands_tests.cpp tests_audio/params_tests.cpp tests_audio/json_tests.cpp
-  tests_audio/engine_tests.cpp)
-target_include_directories(fa_audio_tests PRIVATE third_party)
-target_link_libraries(fa_audio_tests PRIVATE fa_audio)
-
 # --- version.dll: the proxy factorio.exe loads from its own folder (fadev.py install puts it there) ---
 add_library(version_proxy SHARED src/proxy/version.cpp)
 set_target_properties(version_proxy PROPERTIES OUTPUT_NAME version)
+endif()
+
+if(APPLE)
+# --- the injected library: loaded into the game with DYLD_INSERT_LIBRARIES (tools/mac/launch.sh) ---
+# entry.cpp stays last: its initializer starts everything, and initializers run in link order, so every other file's
+# globals are constructed by then.
+add_library(fa_native SHARED
+  src/log.cpp src/mac/image.cpp src/mac/sym.cpp src/mac/layout.cpp src/mac/inline_hook.cpp src/mac/hooks.cpp src/mac/entry.cpp)
+target_include_directories(fa_native PRIVATE src ${CMAKE_BINARY_DIR}/generated)
+target_link_libraries(fa_native PRIVATE faui fa_update fa_audio)
+set_target_properties(fa_native PROPERTIES PREFIX "lib" SUFFIX ".dylib")
+
+# --- tests of the Mac layer's pure parts (the hook relocator, the field decoder) ---
+add_executable(fa_mac_tests tests_mac/main.cpp tests_mac/inline_hook_tests.cpp tests_mac/layout_tests.cpp
+  src/mac/inline_hook.cpp src/mac/layout.cpp src/log.cpp tests_mac/sym_stub.cpp)
+target_include_directories(fa_mac_tests PRIVATE src third_party)
+endif()
