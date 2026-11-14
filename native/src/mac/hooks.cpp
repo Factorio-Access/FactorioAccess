@@ -8,7 +8,10 @@
 #include <mutex>
 #include <string>
 #include <vector>
+#include <filesystem>
+#include "assets.h"
 #include "log.h"
+#include "lua_native.h"
 #include "mac/abi.h"
 #include "mac/inline_hook.h"
 #include "sym.h"
@@ -69,6 +72,18 @@ thread_local std::string t_creating_mod;
 
 // LuaGameScript::LuaGameScript(std::string const& name, PackagePath const& x4, Mod const*, LuaRemote*, ...): the
 // base-object constructor (C2), which the complete-object one tail-calls. Fifteen arguments after `this`.
+size_t g_mod_package, g_package_path;  // Mod::package (unique_ptr<Package>), Package::packagePath_ (std::filesystem::path)
+
+// Where FactorioAccess's files are: the engine's own package for the mod (a directory, or the installed zip). On the
+// Mac a std::filesystem::path is one UTF-8 std::string.
+void note_mod_package(const void* mod) {
+  if (!mod) return;
+  const void* package = *reinterpret_cast<void* const*>(reinterpret_cast<const char*>(mod) + g_mod_package);
+  if (!package) return;
+  auto& path = *reinterpret_cast<const mac::abi::String*>(reinterpret_cast<const char*>(package) + g_package_path);
+  assets::set_package(std::filesystem::path(path.str()).wstring());
+}
+
 using LuaGameScriptCtor_t = void* (*)(void*, const mac::abi::String*, void*, void*, void*, void*, void*, void*, void*, void*, void*,
                                       void*, void*, void*, void*, void*);
 LuaGameScriptCtor_t LuaGameScriptCtor_orig;
@@ -78,6 +93,7 @@ void* LuaGameScriptCtor_hook(void* self, const mac::abi::String* name, void* a2,
     ~Clear() { t_creating_mod.clear(); }  // also when the mod's script fails to load (a C++ exception)
   } clear;
   t_creating_mod = name->str();
+  if (t_creating_mod == "mod-FactorioAccess") note_mod_package(a6);  // a6: Mod const*
   return LuaGameScriptCtor_orig(self, name, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15);
 }
 
@@ -85,8 +101,9 @@ using InitLuaState_t = void (*)(void*);
 InitLuaState_t InitLuaState_orig;
 void InitLuaState_hook(void* L) {
   InitLuaState_orig(L);
+  // Script names are "mod-<mod name>" for mods and "level" for the scenario's own script.
   std::string_view name = t_creating_mod;
-  log::writef("hooks: Lua state for '{}'", name);
+  if (name.starts_with("mod-")) lua::on_state_created(L, name.substr(4));
 }
 }  // namespace
 
@@ -120,6 +137,12 @@ bool run_on_main_thread(std::function<void()> fn, unsigned timeout_ms) {
 }
 
 bool install() {
+  {
+    auto mp = sym::offset("Mod", "package"), pp = sym::offset("Package", "packagePath_");
+    if (!mp || !pp) return false;
+    g_mod_package = *mp;
+    g_package_path = *pp;
+  }
   g_hooks = {
       Hook{sym::addr("MainLoop::mainLoopStep"), (void*)&MainLoopStep_hook, (void**)&MainLoopStep_orig, "MainLoop::mainLoopStep", false},
       Hook{sym::addr("LuaGameScript::LuaGameScript"), (void*)&LuaGameScriptCtor_hook, (void**)&LuaGameScriptCtor_orig,

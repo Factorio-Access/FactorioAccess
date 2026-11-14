@@ -371,9 +371,9 @@ code. Disassemble a function before guessing what it does.
 
 ### macOS (in progress, branch mac-native)
 
-The Mac layer is `native/src/mac/`; everything platform-free (`ui/`, `audio/`, `update/`) is shared. Stage 1 is done:
-the library loads, resolves the game's names, fields and virtual slots, and hooks the main loop and Lua state
-creation. Speech, the main menus, input and the rest are not ported yet.
+The Mac layer is `native/src/mac/`; everything platform-free (`ui/`, `audio/`, `update/`, `lua_native.cpp`,
+`assets.cpp`) is shared. Done: loading, name/field/slot resolution, hooks, speech, and the `_fa_native` bridge
+(speech, sounds, clipboard, pointer). The main menus, input and the rest are not ported yet.
 
 - The game (Steam, `~/Library/Application Support/Steam/steamapps/common/Factorio/factorio.app`) is native arm64,
   clang + its own statically linked libc++ (Itanium ABI). Its hardened runtime allows `DYLD_INSERT_LIBRARIES`
@@ -388,6 +388,13 @@ creation. Speech, the main menus, input and the rest are not ported yet.
   `tests_mac/`.
 - The library's initializer runs before the game's `main()`. Initializers run in link order, so `mac/entry.cpp` stays
   last in its CMake list.
+- Speech (`mac/speech.mm`, NonVisualCalculus' design): a running screen reader's Prism plugin
+  (`~/Library/Application Support/<reader>/prism/*.dylib`), else the system voice rendered through AVSpeech and played
+  gaplessly on its own thread, with the Spoken Content voice and rate. `FA_SPEECH=voiceover` (VoiceOver, only if
+  running) or `FA_SPEECH=system`. Never Prism's "best" backend (it can launch VoiceOver). `libprism.dylib` (0.18.1)
+  sits next to the library, weakly linked.
+- arm64 returns a large struct through x8, not a hidden first argument: `LuaHelper::parseLocalisedString` is declared
+  as returning a buffer struct on the Mac (`lua_native.cpp`).
 - The main loop steps about 1500 times a second on the Mac, far more than it draws: anything per-frame must not
   assume one step is one frame.
 
@@ -395,7 +402,9 @@ creation. Speech, the main menus, input and the rest are not ported yet.
 cmake -S native -B native/build/mac -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo
 ninja -C native/build/mac
 native/build/mac/fa_mac_tests && native/build/mac/faui_tests && native/build/mac/fa_audio_tests
-native/tools/mac/launch.sh        # Steam running; log: ~/Library/Logs/FactorioAccess/native.log
+ln -s "$PWD" ~/Library/Application\ Support/factorio/mods/FactorioAccess   # once; then enable it in mod-list.json
+native/tools/mac/launch.sh [game args]   # Steam running; log: ~/Library/Logs/FactorioAccess/native.log
+native/tools/mac/launch.sh --enable-lua-udp 52345 --load-game <save.zip>   # dev Lua over UDP (scripts/dev-udp.lua)
 pkill -TERM -f MacOS/factorio     # the game quits cleanly on SIGTERM
 ```
 

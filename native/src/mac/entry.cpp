@@ -1,13 +1,18 @@
 // The Mac entry point. The library is loaded into the game with DYLD_INSERT_LIBRARIES (tools/mac/launch.sh sets it), and
 // its initializer runs before the game's main(), on the main thread, so every hook is in place before the game's
-// first frame. Port stage 1: find the game's functions, fields and virtual slots, hook the main loop and Lua state
-// creation, and log what was found. Speech, menus and the rest follow.
+// first frame. So far: speech, the Lua bridge (`_fa_native`: speech, sounds, clipboard, pointer) and the startup
+// report of what was resolved. The main menus, input and the rest follow.
 #include <chrono>
 #include <cstdlib>
 #include <format>
 #include <string>
 #include <vector>
+#include "assets.h"
+#include "audio/audio.h"
+#include "clipboard.h"
 #include "hooks.h"
+#include "lua_native.h"
+#include "speech.h"
 #include "log.h"
 #include "sym.h"
 
@@ -85,21 +90,37 @@ void report() {
     else ++missing;
   fa::log::writef("fa_native: {} names unresolved, {} fields differ from 2.1.24", missing, mismatched);
 }
+bool env_flag(const char* name) {
+  const char* v = std::getenv(name);
+  return v && v[0] == '1';
+}
 }  // namespace
 
 __attribute__((constructor)) static void fa_init() {
   fa::log::init();
   fa::log::write("fa_native: loaded (macOS)");
+  fa::speech::set_muted(env_flag("FA_MUTE"));
+  bool sp = fa::speech::init();
   if (!fa::sym::init()) {
-    fa::log::write("fa_native: no symbols; disabled");
+    fa::speech::speak("Factorio Access native code could not read the game's symbols and is disabled", true);
     return;
   }
   report();
+  if (!fa::lua::init() || !fa::assets::init()) {
+    fa::speech::speak("Factorio Access native code does not support this game version and is disabled", true);
+    return;
+  }
   if (!fa::hooks::install()) {
     fa::log::write("fa_native: hook install failed; removing what attached");
     fa::hooks::remove();
+    fa::speech::speak("Factorio Access native code does not support this game version and is disabled", true);
     return;
   }
+  fa::audio::set_log([](std::string_view line) { fa::log::writef("audio: {}", line); });
+  // Sound names are relative to the mod's audio/ folder, as the launcher resolved them.
+  if (!fa::audio::init([](std::string_view name) { return fa::assets::read("audio/" + std::string(name)); }))
+    fa::log::write("fa_native: audio unavailable");
+  fa::clipboard::start();
   // How often the main loop steps, measured once: on the Mac it steps far more often than it draws.
   fa::hooks::set_frame_callback([] {
     using clock = std::chrono::steady_clock;
@@ -110,5 +131,5 @@ __attribute__((constructor)) static void fa_init() {
       fa::log::writef("fa_native: {} main loop steps in the first 5 s", fa::hooks::frame());
     }
   });
-  fa::log::write("fa_native: ready");
+  fa::log::writef("fa_native: ready, speech {}", sp ? fa::speech::backend_name() : "unavailable");
 }
