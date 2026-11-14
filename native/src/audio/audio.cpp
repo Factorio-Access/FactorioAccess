@@ -515,7 +515,9 @@ class Worker {
 };
 
 std::mutex g_api_mu;
-std::unique_ptr<Worker> g_worker;
+// Never destroyed while it runs: the game exits without calling shutdown(), and destroying the Worker then would destroy
+// its joinable std::thread, which calls std::terminate (a fail-fast crash on every exit).
+Worker* g_worker = nullptr;
 
 bool start(AssetLoader loader, bool null_device) {
   std::lock_guard lk(g_api_mu);
@@ -526,7 +528,7 @@ bool start(AssetLoader loader, bool null_device) {
   try {
     auto w = std::make_unique<Worker>(std::move(loader), null_device);
     if (!w->start()) return false;
-    g_worker = std::move(w);
+    g_worker = w.release();
     return true;
   } catch (const std::exception& e) {
     logf("audio: init failed: {}", e.what());
@@ -570,7 +572,8 @@ void shutdown() {
   std::lock_guard lk(g_api_mu);
   if (!g_worker) return;
   g_worker->stop();
-  g_worker.reset();
+  delete g_worker;  // joined, so safe
+  g_worker = nullptr;
 }
 
 }  // namespace fa::audio
