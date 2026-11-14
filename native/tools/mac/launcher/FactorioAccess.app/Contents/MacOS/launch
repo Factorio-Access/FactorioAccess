@@ -1,0 +1,6 @@
+#!/bin/sh
+# The app bundle Steam's launch option names (see launch.sh, "--open"): Steam spawns a script launch option as
+# x86_64, which needs Rosetta, but opens a bundle through LaunchServices natively. It runs launch.sh beside the bundle
+# and nothing else.
+a="/$0"; a=${a%/*}; a=${a#/}; a=${a:-.}; here=$(cd "$a" || exit 1; pwd -P)
+exec "$here/../../../launch.sh" --open "$@"

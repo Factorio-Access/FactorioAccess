@@ -375,7 +375,8 @@ The Mac layer is `native/src/mac/`; everything platform-free (`ui/`, `audio/`, `
 `assets.cpp`, `app.cpp`, `screens/`, `input.cpp`, `game.cpp`, `devserver.cpp`) is shared. Everything the Windows
 layer does is ported: the main menus and their keyboard, speech, the `_fa_native` bridge, the update check, the
 watchdog and the dev server (`FA_PORT`). Not on the Mac: `FA_NOFOCUS`, the game-audio half of `FA_MUTE` (speech
-still mutes), the dev server's fault guard (a faulting route takes the game down), and `fadev.py`/the installer.
+still mutes), the dev server's fault guard (a faulting route takes the game down), `fadev.py`, and the installer's window (its
+console mode runs on the Mac).
 
 - The game (Steam, `~/Library/Application Support/Steam/steamapps/common/Factorio/factorio.app`) is native arm64,
   clang + its own statically linked libc++ (Itanium ABI). Its hardened runtime allows `DYLD_INSERT_LIBRARIES`
@@ -405,6 +406,15 @@ still mutes), the dev server's fault guard (a faulting route takes the game down
   as returning a buffer struct on the Mac (`lua_native.cpp`).
 - `MainLoop::run` calls `mainLoopStep` back to back on the Mac (about 1500 a second; the step sleeps and decides
   when to draw). The native frame (`mac/hooks.cpp`) runs at most 240 times a second; one step is not one frame.
+
+- Players: the installer (console mode) unpacks `fa-native-macos.zip` (`package_native.py --mac`: both libraries
+  plus `tools/mac/launcher/`) into `~/Library/Application Support/FactorioAccess` and sets Factorio's Steam launch
+  option to `"<that folder>/FactorioAccess.app" %command%` in `localconfig.vdf` (only while Steam is not running).
+  The bundle exists because Steam starts a script launch option under Rosetta; it runs `launch.sh --open`, which
+  starts the game's own bundle with `open --arch arm64 --env DYLD_INSERT_LIBRARIES=...` so the game gets keyboard
+  focus (header of `launch.sh`). `tools/mac/launch.sh` is the dev variant: this checkout's build, in-process.
+- Running the game outside Steam changes files Steam Cloud syncs: the next Steam launch may stop at a cloud
+  conflict dialog.
 
 ```bash
 cmake -S native -B native/build/mac -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo

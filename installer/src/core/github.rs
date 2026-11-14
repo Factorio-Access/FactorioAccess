@@ -1,6 +1,8 @@
 //! GitHub releases of the repo: the tagged semver versions (what the picker lists, newest first) and the rolling
 //! `ci-latest` pre-release that CI republishes (offered last, on purpose). Only releases carrying both halves (the
-//! mod zip and the native zip) are offered: the old launcher-era releases have neither and are skipped.
+//! mod zip and the native zip) are offered: the old launcher-era releases have neither and are skipped. On the Mac a
+//! release with the mod zip is listed even without fa-native-macos.zip, so that choosing it can say it has no macOS
+//! build rather than every release before the first Mac one silently vanishing.
 use serde::Deserialize;
 
 use super::paths::{CI_TAG, GITHUB_RELEASES_URL, MOD_NAME, NATIVE_ZIP};
@@ -66,6 +68,8 @@ pub struct Catalog {
 }
 
 impl Catalog {
+    /// The window's default choice (the Mac has no window yet).
+    #[cfg_attr(not(windows), allow(dead_code))]
     pub fn latest(&self) -> Option<&ReleaseInfo> {
         self.versions.first()
     }
@@ -81,13 +85,19 @@ pub fn mod_asset(r: &ReleaseInfo) -> Option<&Asset> {
     r.assets.iter().find(|a| a.name.starts_with(&format!("{}_", MOD_NAME)) && a.name.ends_with(".zip"))
 }
 
-/// The native DLLs: fa-native.zip.
+/// The native code: fa-native.zip (on the Mac, fa-native-macos.zip).
 pub fn native_asset(r: &ReleaseInfo) -> Option<&Asset> {
     r.assets.iter().find(|a| a.name == NATIVE_ZIP)
 }
 
+#[cfg(windows)]
 fn installable(r: &ReleaseInfo) -> bool {
     mod_asset(r).is_some() && native_asset(r).is_some()
+}
+
+#[cfg(not(windows))]
+fn installable(r: &ReleaseInfo) -> bool {
+    mod_asset(r).is_some()
 }
 
 pub fn catalog_from(releases: Vec<ReleaseInfo>) -> Catalog {
@@ -120,7 +130,9 @@ pub fn fetch_catalog() -> Result<Catalog, String> {
     Ok(catalog_from(releases))
 }
 
-/// "v0.16.57" or "ci-latest" vs the installed version: is the installed one at least as new?
+/// "v0.16.57" or "ci-latest" vs the installed version: is the installed one at least as new? (The window's status;
+/// the Mac has no window yet.)
+#[cfg_attr(not(windows), allow(dead_code))]
 pub fn is_up_to_date(installed: Option<&str>, latest: &str) -> bool {
     let Some(installed) = installed else { return false };
     match (parse_version(installed), parse_version(latest)) {
@@ -170,6 +182,19 @@ mod tests {
         assert_eq!(c.ci.unwrap().tag_name, "ci-latest");
         assert_eq!(mod_asset(&rel("v1.0.0")).unwrap().browser_download_url, "m");
         assert_eq!(native_asset(&rel("v1.0.0")).unwrap().browser_download_url, "n");
+    }
+
+    #[cfg(not(windows))]
+    #[test]
+    fn mac_lists_releases_without_a_macos_build() {
+        let mut windows_only = rel("v0.16.3");
+        windows_only.assets.retain(|a| a.name != NATIVE_ZIP);
+        windows_only.assets.push(Asset { name: "fa-native.zip".into(), browser_download_url: "w".into() });
+        let c = catalog_from(vec![rel("v0.16.4"), windows_only]);
+        let tags: Vec<_> = c.versions.iter().map(|r| r.tag_name.as_str()).collect();
+        assert_eq!(tags, vec!["v0.16.4", "v0.16.3"]);
+        assert_eq!(native_asset(&c.versions[0]).unwrap().browser_download_url, "n");
+        assert!(native_asset(&c.versions[1]).is_none());
     }
 
     #[test]

@@ -3,10 +3,10 @@
 use std::path::{Path, PathBuf};
 
 use super::factorio::{normalize, Factorio};
-use super::paths::{DLLS, VERSION_FILE};
+use super::paths::{NATIVE_FILES, VERSION_FILE};
 use super::state;
 
-const STEAM_APP_ID: &str = "427520";
+pub const STEAM_APP_ID: &str = "427520";
 
 /// Every `"key"  "value"` occurrence in a Valve KeyValues text file, with `\\` unescaped.
 pub fn vdf_values(text: &str, key: &str) -> Vec<String> {
@@ -23,6 +23,7 @@ pub fn vdf_values(text: &str, key: &str) -> Vec<String> {
     out
 }
 
+#[cfg(windows)]
 fn steam_path() -> Option<PathBuf> {
     use winreg::enums::HKEY_CURRENT_USER;
     use winreg::RegKey;
@@ -31,7 +32,14 @@ fn steam_path() -> Option<PathBuf> {
     Some(PathBuf::from(s.replace('/', "\\")))
 }
 
-/// Factorio's root in the Steam library whose steamapps\ holds the app's manifest.
+#[cfg(not(windows))]
+fn steam_path() -> Option<PathBuf> {
+    let steam = super::paths::steam_dir();
+    steam.is_dir().then_some(steam)
+}
+
+/// Factorio's root (on the Mac, the folder holding factorio.app) in the Steam library whose steamapps\ holds the
+/// app's manifest.
 fn steam_root() -> Option<PathBuf> {
     let steam = steam_path()?;
     let mut libs = vec![steam.clone()];
@@ -48,7 +56,8 @@ fn steam_root() -> Option<PathBuf> {
 }
 
 /// Installs to offer, best first, without duplicates: the remembered one, Steam's, the standalone installer's and
-/// GOG's default folders, and the folder this installer was started from or its parent (a portable install).
+/// GOG's default folders (on the Mac, Steam's default library and the Applications folders), and the folder this
+/// installer was started from or its parent (a portable install).
 pub fn candidates() -> Vec<Factorio> {
     let mut roots: Vec<PathBuf> = Vec::new();
     if let Some(r) = state::load().factorio_root {
@@ -57,12 +66,19 @@ pub fn candidates() -> Vec<Factorio> {
     if let Some(r) = steam_root() {
         roots.push(r);
     }
+    #[cfg(windows)]
     for var in ["ProgramFiles", "ProgramFiles(x86)"] {
         if let Ok(pf) = std::env::var(var) {
             roots.push(Path::new(&pf).join("Factorio"));
             roots.push(Path::new(&pf).join("Steam").join("steamapps").join("common").join("Factorio"));
             roots.push(Path::new(&pf).join("GOG Galaxy").join("Games").join("Factorio"));
         }
+    }
+    #[cfg(not(windows))]
+    {
+        roots.push(super::paths::steam_dir().join("steamapps").join("common").join("Factorio"));
+        roots.push(PathBuf::from("/Applications/factorio.app"));
+        roots.push(super::paths::home().join("Applications").join("factorio.app"));
     }
     if let Some(dir) = std::env::current_exe().ok().and_then(|e| e.parent().map(Path::to_path_buf)) {
         roots.push(dir.clone());
@@ -85,14 +101,15 @@ pub fn same_path(a: &Path, b: &Path) -> bool {
     normalize(a).to_string_lossy().eq_ignore_ascii_case(&normalize(b).to_string_lossy())
 }
 
-/// Whether this install has the native code (the DLLs next to factorio.exe).
+/// Whether this install has the native code (the DLLs next to factorio.exe; on the Mac, the libraries in the native
+/// folder).
 pub fn is_installed(f: &Factorio) -> bool {
-    DLLS.iter().any(|d| f.bin_dir.join(d).exists()) && f.bin_dir.join(VERSION_FILE).exists()
+    NATIVE_FILES.iter().any(|d| f.native_dir.join(d).exists()) && f.native_dir.join(VERSION_FILE).exists()
 }
 
-/// The installed version: what the installer wrote next to the DLLs ("v0.16.57" or "ci-<sha>").
+/// The installed version: what the installer wrote next to the native files ("v0.16.57" or "ci-<sha>").
 pub fn installed_version(f: &Factorio) -> Option<String> {
-    let text = std::fs::read_to_string(f.bin_dir.join(VERSION_FILE)).ok()?;
+    let text = std::fs::read_to_string(f.native_dir.join(VERSION_FILE)).ok()?;
     let v = text.lines().next()?.trim();
     (!v.is_empty()).then(|| v.to_string())
 }
@@ -118,7 +135,8 @@ pub fn installed_mods(f: &Factorio) -> (Vec<PathBuf>, Vec<PathBuf>) {
 }
 
 /// Whether a factorio.exe is running (any install: they share nothing we write, but one running from this install
-/// holds the DLLs open and rewrites config.ini on exit, and telling them apart is not worth the risk).
+/// holds the DLLs open and rewrites config.ini on exit, and telling them apart is not worth the risk). On the Mac,
+/// any process whose executable is a factorio.app's Contents/MacOS/factorio, which rewrites the same config.ini.
 pub fn factorio_running() -> bool {
     #[cfg(windows)]
     unsafe {
@@ -140,7 +158,7 @@ pub fn factorio_running() -> bool {
         found
     }
     #[cfg(not(windows))]
-    false
+    super::process::command_line_matches(r"factorio\.app/Contents/MacOS/factorio( |$)")
 }
 
 #[cfg(test)]
@@ -155,9 +173,18 @@ mod tests {
         assert!(vdf_values(text, "installdir").is_empty());
     }
 
+    #[cfg(windows)]
     #[test]
     fn same_path_ignores_case_and_dots() {
         assert!(same_path(Path::new("D:\\Games\\Factorio"), Path::new("d:/games/factorio/bin/..")));
         assert!(!same_path(Path::new("D:\\Games\\Factorio"), Path::new("D:\\Games\\Factorio2")));
+    }
+
+    /// APFS is case-insensitive unless formatted otherwise, as NTFS is.
+    #[cfg(not(windows))]
+    #[test]
+    fn mac_same_path_ignores_case_and_dots() {
+        assert!(same_path(Path::new("/Applications/factorio.app"), Path::new("/applications/Factorio.app/Contents/..")));
+        assert!(!same_path(Path::new("/Applications/factorio.app"), Path::new("/Applications/factorio2.app")));
     }
 }
