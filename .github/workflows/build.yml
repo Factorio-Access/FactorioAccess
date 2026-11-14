@@ -109,6 +109,36 @@ jobs:
             dist/fa-native.zip
             dist/fa_native.pdb
 
+  # The Mac build: native arm64 (the Mac game runs natively on Apple silicon). fa-native-macos.zip holds the two
+  # libraries and the launcher (native/tools/mac/launcher) that the installer unpacks into
+  # ~/Library/Application Support/FactorioAccess.
+  native-macos:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v7
+      - name: Version (as the Windows build)
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then VER="$GITHUB_REF_NAME"; else VER="ci-$(git rev-parse --short HEAD)"; fi
+          echo "FA_VERSION=$VER" >> "$GITHUB_ENV"
+      - name: Build (CMake + Ninja, RelWithDebInfo)
+        run: |
+          brew list ninja >/dev/null 2>&1 || brew install ninja
+          cmake -S native -B native/build/mac -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo
+          ninja -C native/build/mac
+      - name: Tests
+        run: |
+          native/build/mac/faui_tests
+          native/build/mac/fa_audio_tests
+          native/build/mac/fa_mac_tests
+      - name: Package
+        run: python3 native/tools/package_native.py --mac --out dist
+      - uses: actions/upload-artifact@v7
+        with:
+          name: native-macos
+          path: |
+            dist/fa-native-macos.zip
+            dist/fa_native-macos.dSYM.zip
+
   installer:
     runs-on: windows-latest
     steps:
@@ -136,8 +166,35 @@ jobs:
           name: FactorioAccessInstaller
           path: installer/target/release/FactorioAccessInstaller.exe
 
+  # The installer's console mode on the Mac (the window is Windows-only for now).
+  installer-macos:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v7
+      - name: Rust toolchain (installer/rust-toolchain.toml)
+        run: rustup show active-toolchain || rustup toolchain install
+        working-directory: installer
+      - uses: actions/cache@v6
+        with:
+          path: |
+            installer/target
+            ~/.cargo/registry
+          key: installer-${{ runner.os }}-${{ hashFiles('installer/Cargo.lock', 'installer/rust-toolchain.toml') }}
+      - name: Installer tests
+        run: cargo test --release
+        working-directory: installer
+      - name: Build installer
+        run: |
+          cargo build --release
+          mkdir -p ../dist && cp target/release/FactorioAccessInstaller ../dist/FactorioAccessInstaller-macos
+        working-directory: installer
+      - uses: actions/upload-artifact@v7
+        with:
+          name: FactorioAccessInstaller-macos
+          path: dist/FactorioAccessInstaller-macos
+
   publish:
-    needs: [lua-format, mod-zip, native, installer]
+    needs: [lua-format, mod-zip, native, native-macos, installer, installer-macos]
     if: github.event_name == 'push'
     runs-on: ubuntu-24.04
     permissions:
@@ -158,6 +215,8 @@ jobs:
           python tools/portal.py gate
           gh release create "$GITHUB_REF_NAME" "dist/mod-zip/${{ needs.mod-zip.outputs.zip_name }}" dist/native/fa-native.zip \
             dist/native/fa_native.pdb dist/FactorioAccessInstaller/FactorioAccessInstaller.exe \
+            dist/native-macos/fa-native-macos.zip dist/native-macos/fa_native-macos.dSYM.zip \
+            dist/FactorioAccessInstaller-macos/FactorioAccessInstaller-macos \
             --title "$GITHUB_REF_NAME" --generate-notes
       - name: Rolling CI pre-release (CI_LATEST_BRANCH)
         if: github.ref == format('refs/heads/{0}', env.CI_LATEST_BRANCH)
@@ -172,7 +231,9 @@ jobs:
             exit 0
           fi
           assets=("dist/mod-zip/${{ needs.mod-zip.outputs.zip_name }}" dist/native/fa-native.zip \
-            dist/native/fa_native.pdb dist/FactorioAccessInstaller/FactorioAccessInstaller.exe)
+            dist/native/fa_native.pdb dist/FactorioAccessInstaller/FactorioAccessInstaller.exe \
+            dist/native-macos/fa-native-macos.zip dist/native-macos/fa_native-macos.dSYM.zip \
+            dist/FactorioAccessInstaller-macos/FactorioAccessInstaller-macos)
           notes="Automatic build of $CI_LATEST_BRANCH at ${GITHUB_SHA::7}. Untested; the installer lists it last. Tagged releases are the ones to use."
           if [[ -z "$existing" ]]; then
             gh release create ci-latest "${assets[@]}" --prerelease --target "$GITHUB_SHA" --title "Latest CI build" --notes "$notes"

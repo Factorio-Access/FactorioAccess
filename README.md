@@ -53,11 +53,11 @@ The game can be purchased from Factorio.com or from Steam. Any purchase gives ac
 
 ## Mac Version
 
-1. Go to https://www.factorio.com/download
-1. If needed, login using your Factorio account or Steam account.
-1. Among the install options, find the stable releases at the top half of the page.
-1. Go to the section with "Other download options" and select "Download full game for macOS". This will download a "dmg" file.
-1. Install the "dmg" file like any other.
+Factorio Access on the Mac needs an Apple Silicon Mac (M1 or later) and macOS 13.3 or later.
+
+1. Install Factorio from Steam, like any other game. The installer finds it there. A copy from factorio.com (a dmg) also works: put factorio.app in Applications.
+1. Start Factorio once and quit it, so that it creates its settings.
+1. All done! You need to install the mod next.
 
 # Installing Factorio Access
 
@@ -98,21 +98,18 @@ To install a mod release, follow the instructions below, depending on the versio
 1. If it complains it can't find your Factorio installation then add the path to the Factorio executable as an argument when launching.
 1. If you bought Space Age, go into the launcher's mod menu and disable elevated rails, quality, and Space Age.
 
-## MacOS: Mod install and running via Python scripts
+## Mac: Mod install
 
-1. Open the terminal.
-1. Run `python3 --version` to check which Python version is installed. You need Python 3.11 specifically.
-1. If you do not have Python 3.11, install it from the official website: https://www.python.org/downloads/release/python-3110/
-1. In the terminal, navigate to the folder you'd like the launcher folder to be inside. For example: `cd ~/Documents`
-1. Clone the launcher repository with its submodules: `git clone --recurse-submodules git@github.com:Factorio-Access/Factorio-Access-Launcher.git`
-1. Go into the newly created folder: `cd Factorio-Access-Launcher`
-1. Ensure all submodules are initialised: `git submodule update --init --recursive`
-1. Create a virtual environment: `python3.11 -m venv venv`
-1. Install the required packages: `./venv/bin/pip install -r requirements.txt`
-1. The mod should now be fully installed. Any time you want to run the launcher, go to the same folder and run: `./venv/bin/python main.py`
-1. The launcher will prompt for permission to use voiceover features. This needs to be allowed.
-1. Follow the launcher's setup steps as instructed by it.
-1. If you bought Space Age, go into the launcher's mod menu and disable elevated rails, quality, and Space Age.
+The Mac version runs the mod's native code inside the game, as on Windows: no launcher, and speech through your screen reader if it ships a Prism plugin (for example Macaw), or else the system voice from System Settings, Accessibility, Spoken Content.
+
+1. Download `FactorioAccessInstaller-macos`, `fa-native-macos.zip` and the mod zip (`FactorioAccess_<version>.zip`) from the same release on the GitHub releases page.
+1. Quit Steam (the installer sets Factorio's launch option, which Steam would overwrite while it runs).
+1. In Terminal, run the installer: `chmod +x ~/Downloads/FactorioAccessInstaller-macos && ~/Downloads/FactorioAccessInstaller-macos`. It works in the terminal and asks questions with numbered answers.
+1. Choose option 1 to install from GitHub, or option 2 to install the files you downloaded. Say yes to the recommended Factorio settings.
+1. The installer puts the native code in `~/Library/Application Support/FactorioAccess` and sets Factorio's Steam launch option to `"<that folder>/FactorioAccess.app" %command%`. If Steam was running, it puts that line on the clipboard instead: paste it into Factorio's Properties, General, Launch Options in Steam.
+1. Start Factorio from Steam. The main menu speaks.
+
+To use VoiceOver instead of your screen reader's plugin, or the system voice, start the game from Terminal with Steam running: `FA_SPEECH=voiceover ~/Library/Application\ Support/FactorioAccess/launch.sh` (or `FA_SPEECH=system`). The native code's log is `~/Library/Logs/FactorioAccess/native.log`. To uninstall, run the installer and choose Uninstall.
 
 # Mod Documentation
 

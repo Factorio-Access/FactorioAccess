@@ -2,7 +2,9 @@
 //!
 //! - the mod zip (`FactorioAccess_<version>.zip`, exactly as CI built and verified it) into the mods folder, older
 //!   `FactorioAccess_*.zip` files removed, the mod enabled in mod-list.json;
-//! - `fa-native.zip`'s three DLLs next to factorio.exe (bin\x64), plus a version file recording the release.
+//! - `fa-native.zip`'s three DLLs next to factorio.exe (bin\x64), plus a version file recording the release. On the
+//!   Mac, `fa-native-macos.zip`'s libraries and launcher into `~/Library/Application Support/FactorioAccess`
+//!   (never into factorio.app), executable and without the quarantine attribute, plus the same version file.
 //!
 //! The recommended config.ini changes are read from the mod zip being installed; applying them is the caller's
 //! question to ask (`config_changes`). Nothing is touched while a factorio.exe is running.
@@ -12,7 +14,7 @@ use std::path::{Path, PathBuf};
 
 use super::detect::{factorio_running, installed_mods};
 use super::factorio::Factorio;
-use super::paths::{DLLS, MOD_NAME, VERSION_FILE};
+use super::paths::{MOD_NAME, NATIVE_FILES, NATIVE_ZIP, VERSION_FILE};
 
 /// Progress as the worker sees it; the GUI shows it, the CLI prints it.
 #[derive(Debug, Clone)]
@@ -101,7 +103,7 @@ pub fn read_mod_zip(bytes: Vec<u8>) -> Result<ModZip, String> {
     Ok(ModZip { bytes, version, change_sets })
 }
 
-/// The native zip, checked: the three DLLs and version.txt at its top level.
+/// The native zip, checked: the three DLLs (on the Mac, the native files) and version.txt.
 pub struct NativeZip {
     pub files: Vec<(String, Vec<u8>)>,
     pub version: String,
@@ -110,13 +112,13 @@ pub struct NativeZip {
 pub fn read_native_zip(bytes: &[u8]) -> Result<NativeZip, String> {
     let mut archive = zip::ZipArchive::new(Cursor::new(bytes)).map_err(|e| format!("The native zip is not a valid zip: {}", e))?;
     let mut read = |name: &str| -> Result<Vec<u8>, String> {
-        let mut f = archive.by_name(name).map_err(|_| format!("The native zip has no {} -- is this a Factorio Access fa-native.zip?", name))?;
+        let mut f = archive.by_name(name).map_err(|_| format!("The native zip has no {} -- is this a Factorio Access {}?", name, NATIVE_ZIP))?;
         let mut v = Vec::new();
         f.read_to_end(&mut v).map_err(|e| format!("Failed to read {}: {}", name, e))?;
         Ok(v)
     };
     let mut files = Vec::new();
-    for d in DLLS {
+    for d in NATIVE_FILES {
         files.push((d.to_string(), read(d)?));
     }
     let version = String::from_utf8_lossy(&read("version.txt")?).lines().next().unwrap_or("").trim().to_string();
@@ -126,10 +128,16 @@ pub fn read_native_zip(bytes: &[u8]) -> Result<NativeZip, String> {
     Ok(NativeZip { files, version })
 }
 
+#[cfg(windows)]
+const NO_NATIVE_ASSET: &str = "That release has no fa-native.zip.";
+/// The Mac build came later than the Windows one, so older releases are listed and refused with this.
+#[cfg(not(windows))]
+const NO_NATIVE_ASSET: &str = "This release has no macOS build (fa-native-macos.zip).";
+
 /// Both halves of a GitHub release, downloaded and checked.
 pub fn download_release(r: &super::github::ReleaseInfo, progress: &dyn Fn(Progress)) -> Result<(ModZip, NativeZip), String> {
     let mod_asset = super::github::mod_asset(r).ok_or("That release has no mod zip.")?;
-    let native_asset = super::github::native_asset(r).ok_or("That release has no fa-native.zip.")?;
+    let native_asset = super::github::native_asset(r).ok_or(NO_NATIVE_ASSET)?;
     progress(Progress::Status(format!("Downloading {}...", mod_asset.name)));
     let m = read_mod_zip(download_bytes(&mod_asset.browser_download_url, progress)?)?;
     progress(Progress::Status(format!("Downloading {}...", native_asset.name)));
@@ -163,6 +171,37 @@ fn replace_file(target: &Path, data: &[u8]) -> Result<(), String> {
         }
     }
     fs::rename(&tmp, target).map_err(|e| format!("Failed to move {} into place: {}", target.display(), e))
+}
+
+#[cfg(windows)]
+fn write_native_file(target: &Path, data: &[u8]) -> Result<(), String> {
+    replace_file(target, data)
+}
+
+/// The bundle's folders are created as needed. The scripts are run and the libraries loaded straight from here, so
+/// every file but the plist is executable, whatever modes the zip recorded.
+#[cfg(not(windows))]
+fn write_native_file(target: &Path, data: &[u8]) -> Result<(), String> {
+    use std::os::unix::fs::PermissionsExt;
+    if let Some(dir) = target.parent() {
+        fs::create_dir_all(dir).map_err(|e| format!("Failed to create {}: {}", dir.display(), e))?;
+    }
+    replace_file(target, data)?;
+    let mode = if target.extension().is_some_and(|e| e == "plist") { 0o644 } else { 0o755 };
+    fs::set_permissions(target, fs::Permissions::from_mode(mode)).map_err(|e| format!("Failed to make {} executable: {}", target.display(), e))
+}
+
+/// Gatekeeper refuses to open a quarantined FactorioAccess.app, and files written by an installer that was itself
+/// downloaded in a browser can inherit the attribute. Best effort: xattr also fails on a file that never had it.
+#[cfg(not(windows))]
+fn unquarantine(dir: &Path) {
+    let mut tops: Vec<&str> = NATIVE_FILES.iter().filter_map(|n| n.split('/').next()).collect();
+    tops.dedup();
+    let _ = std::process::Command::new("xattr")
+        .args(["-dr", "com.apple.quarantine"])
+        .args(tops.iter().map(|t| dir.join(t)))
+        .stderr(std::process::Stdio::null())
+        .status();
 }
 
 /// mod-list.json: FactorioAccess enabled, without a version pin (which would keep an older zip loaded).
@@ -199,9 +238,12 @@ pub fn install(f: &Factorio, m: &ModZip, n: &NativeZip, progress: &dyn Fn(Progre
         return Err("Factorio is running. Close it and try again.".into());
     }
     // Everything that could refuse is checked before anything is written.
-    let proxy = f.bin_dir.join("version.dll");
-    if proxy.exists() && !is_our_proxy(&proxy) {
-        return Err(format!("{} belongs to another program; Factorio Access needs that file name. Remove it yourself if you no longer need it.", proxy.display()));
+    #[cfg(windows)]
+    {
+        let proxy = f.bin_dir.join("version.dll");
+        if proxy.exists() && !is_our_proxy(&proxy) {
+            return Err(format!("{} belongs to another program; Factorio Access needs that file name. Remove it yourself if you no longer need it.", proxy.display()));
+        }
     }
     let mods = f.mods_dir();
     let (old_zips, dirs) = installed_mods(f);
@@ -212,11 +254,13 @@ pub fn install(f: &Factorio, m: &ModZip, n: &NativeZip, progress: &dyn Fn(Progre
         ));
     }
 
-    progress(Progress::Status(format!("Installing the native code ({}) into {}...", n.version, f.bin_dir.display())));
+    progress(Progress::Status(format!("Installing the native code ({}) into {}...", n.version, f.native_dir.display())));
     for (name, data) in &n.files {
-        replace_file(&f.bin_dir.join(name), data)?;
+        write_native_file(&f.native_dir.join(name), data)?;
     }
-    fs::write(f.bin_dir.join(VERSION_FILE), format!("{}\n", n.version)).map_err(|e| format!("Failed to write the version file: {}", e))?;
+    fs::write(f.native_dir.join(VERSION_FILE), format!("{}\n", n.version)).map_err(|e| format!("Failed to write the version file: {}", e))?;
+    #[cfg(not(windows))]
+    unquarantine(&f.native_dir);
 
     progress(Progress::Status(format!("Installing the mod {} into {}...", m.version, mods.display())));
     fs::create_dir_all(&mods).map_err(|e| format!("Failed to create {}: {}", mods.display(), e))?;
@@ -284,9 +328,19 @@ pub mod tests {
         ])
     }
 
+    #[cfg(windows)]
     pub fn native_zip(version: &str) -> Vec<u8> {
         let proxy: Vec<u8> = b"MZ".iter().copied().chain("fa_native.dll".encode_utf16().flat_map(|u| u.to_le_bytes())).collect();
         make_zip(&[("version.dll", &proxy), ("fa_native.dll", b"MZ native"), ("prism.dll", b"MZ prism"), ("version.txt", format!("{}\n", version).as_bytes())])
+    }
+
+    /// As package_native.py --mac lays it out, each file holding its own name.
+    #[cfg(not(windows))]
+    pub fn native_zip(version: &str) -> Vec<u8> {
+        let version = format!("{}\n", version);
+        let mut entries: Vec<(&str, &[u8])> = NATIVE_FILES.iter().map(|n| (*n, n.as_bytes())).collect();
+        entries.push(("version.txt", version.as_bytes()));
+        make_zip(&entries)
     }
 
     #[test]
@@ -299,10 +353,11 @@ pub mod tests {
         assert!(read_mod_zip(make_zip(&[("other/info.json", b"{}")])).is_err());
         let n = read_native_zip(&native_zip("ci-abc1234")).unwrap();
         assert_eq!(n.version, "ci-abc1234");
-        assert_eq!(n.files.len(), 3);
+        assert_eq!(n.files.len(), NATIVE_FILES.len());
         assert!(read_native_zip(&make_zip(&[("version.dll", b"x")])).is_err());
     }
 
+    #[cfg(windows)]
     #[test]
     fn installs_into_a_portable_layout() {
         let root = super::super::factorio::tests::fake_install(
@@ -323,7 +378,7 @@ pub mod tests {
         let r = install(&f, &m, &n, &|_| {}).unwrap();
         assert_eq!(r.removed, vec![f.mods_dir().join("FactorioAccess_0.16.50.zip")]);
         assert!(f.mods_dir().join("FactorioAccess_0.16.57.zip").is_file());
-        for d in DLLS {
+        for d in NATIVE_FILES {
             assert!(f.bin_dir.join(d).is_file());
         }
         assert!(is_our_proxy(&f.bin_dir.join("version.dll")));
@@ -342,5 +397,52 @@ pub mod tests {
         fs::create_dir_all(f.mods_dir().join("FactorioAccess")).unwrap();
         assert!(install(&f, &m, &n, &|_| {}).unwrap_err().contains("unpacked"));
         let _ = fs::remove_dir_all(root);
+    }
+
+    #[cfg(not(windows))]
+    #[test]
+    fn installs_into_the_mac_layout_and_uninstalls() {
+        use std::os::unix::fs::PermissionsExt;
+        let (holder, sys) = super::super::factorio::tests::fake_app("macinstall", Some("[path]\nwrite-data=__PATH__system-write-data__\n"));
+        let base = holder.ancestors().nth(3).unwrap().to_path_buf();
+        let native = base.join("FactorioAccess");
+        let f = Factorio::locate_with(&holder, &sys, &native).unwrap();
+        fs::create_dir_all(f.mods_dir()).unwrap();
+        fs::write(f.mods_dir().join("FactorioAccess_0.16.50.zip"), b"old").unwrap();
+        let m = read_mod_zip(mod_zip("0.16.57")).unwrap();
+        let n = read_native_zip(&native_zip("v0.16.57")).unwrap();
+        if factorio_running() {
+            return;
+        }
+        let app_before = fs::read_dir(f.root.join("Contents")).unwrap().count();
+        let r = install(&f, &m, &n, &|_| {}).unwrap();
+        assert_eq!(r.removed, vec![f.mods_dir().join("FactorioAccess_0.16.50.zip")]);
+        assert!(f.mods_dir().join("FactorioAccess_0.16.57.zip").is_file());
+        for name in NATIVE_FILES {
+            let p = native.join(name);
+            assert_eq!(fs::read(&p).unwrap(), name.as_bytes());
+            let mode = fs::metadata(&p).unwrap().permissions().mode() & 0o777;
+            assert_eq!(mode, if name.ends_with(".plist") { 0o644 } else { 0o755 }, "{}", name);
+        }
+        assert!(!native.join("version.txt").exists());
+        assert!(super::super::detect::is_installed(&f));
+        assert_eq!(super::super::detect::installed_version(&f).as_deref(), Some("v0.16.57"));
+        assert_eq!(fs::read_dir(f.root.join("Contents")).unwrap().count(), app_before);
+
+        // A second install replaces the files; uninstall removes exactly them and keeps installer.json.
+        install(&f, &m, &read_native_zip(&native_zip("v0.16.58")).unwrap(), &|_| {}).unwrap();
+        assert_eq!(super::super::detect::installed_version(&f).as_deref(), Some("v0.16.58"));
+        fs::write(native.join("installer.json"), "{}").unwrap();
+        let removed = super::super::uninstall::uninstall(&f, true).unwrap();
+        assert_eq!(removed.len(), NATIVE_FILES.len() + 2);
+        assert!(!native.join("FactorioAccess.app").exists());
+        assert_eq!(fs::read_dir(&native).unwrap().map(|e| e.unwrap().file_name()).collect::<Vec<_>>(), vec!["installer.json"]);
+        assert!(!super::super::detect::is_installed(&f));
+        assert!(super::super::detect::installed_mods(&f).0.is_empty());
+        fs::remove_file(native.join("installer.json")).unwrap();
+        install(&f, &m, &n, &|_| {}).unwrap();
+        super::super::uninstall::uninstall(&f, false).unwrap();
+        assert!(!native.exists());
+        let _ = fs::remove_dir_all(base);
     }
 }
