@@ -80,7 +80,7 @@ set(PRISM_DLL ${PRISM_DIR}/windows/x64/bin/prism.dll)
 
 # --- the injected DLL ---
 add_library(fa_native SHARED
-  src/dllmain.cpp src/log.cpp src/input.cpp src/app.cpp src/assets.cpp src/lua_native.cpp src/screens/dialogs.cpp src/win/game.cpp src/win/audio_mute.cpp src/speech.cpp src/devserver.cpp
+  src/dllmain.cpp src/log.cpp src/input.cpp src/app.cpp src/assets.cpp src/lua_native.cpp src/screens/dialogs.cpp src/game.cpp src/win/audio_mute.cpp src/speech.cpp src/devserver.cpp
   src/win/hooks.cpp src/win/sym.cpp src/win/window.cpp src/win/agui.cpp src/win/update_check.cpp src/win/watchdog.cpp src/win/clipboard.cpp)
 target_include_directories(fa_native PRIVATE src ${PRISM_DIR}/include ${CMAKE_BINARY_DIR}/generated)
 target_link_libraries(fa_native PRIVATE faui fa_update fa_audio detours ${PRISM_LIB} user32 ws2_32 ole32 dbghelp delayimp winhttp)
@@ -107,12 +107,12 @@ enable_language(OBJCXX)
 set(PRISM_DIR ${CMAKE_SOURCE_DIR}/third_party/prism)
 set(PRISM_DYLIB ${PRISM_DIR}/macos/lib/libprism.dylib)
 add_library(fa_native SHARED
-  src/log.cpp src/lua_native.cpp src/assets.cpp
-  src/mac/image.cpp src/mac/sym.cpp src/mac/layout.cpp src/mac/inline_hook.cpp src/mac/hooks.cpp src/mac/speech.mm src/mac/platform.mm
+  src/log.cpp src/lua_native.cpp src/assets.cpp src/input.cpp src/app.cpp src/game.cpp src/screens/dialogs.cpp src/devserver.cpp
+  src/mac/image.cpp src/mac/watchdog.cpp src/mac/agui.cpp src/mac/sym.cpp src/mac/layout.cpp src/mac/inline_hook.cpp src/mac/hooks.cpp src/mac/speech.mm src/mac/platform.mm src/mac/update_check.mm
   src/mac/entry.cpp)
 target_include_directories(fa_native PRIVATE src ${PRISM_DIR}/include ${CMAKE_BINARY_DIR}/generated)
 target_link_libraries(fa_native PRIVATE faui fa_update fa_audio "-framework AVFoundation" "-framework AppKit" "-framework Foundation"
-  "-framework CoreAudio" "-framework AudioToolbox")
+  "-framework CoreAudio" "-framework AudioToolbox" "-framework CoreFoundation")
 target_link_options(fa_native PRIVATE "LINKER:-weak_library,${PRISM_DYLIB}" "LINKER:-rpath,@loader_path")
 target_compile_options(fa_native PRIVATE $<$<COMPILE_LANGUAGE:OBJCXX>:-fobjc-arc>)
 set_target_properties(fa_native PROPERTIES PREFIX "lib" SUFFIX ".dylib")

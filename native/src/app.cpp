@@ -1,5 +1,9 @@
 #include "app.h"
+#if defined(_WIN32)
 #include <windows.h>
+#else
+#include <CoreFoundation/CoreFoundation.h>
+#endif
 #include <chrono>
 #include <memory>
 #include "audio/audio.h"
@@ -31,8 +35,26 @@ static double now() {
 }
 
 // Typematic at the user's own OS keyboard settings, so navigation repeat feels like the rest of the system.
+#if !defined(_WIN32)
+// macOS keeps them in the global preferences domain, in units of 15 ms: InitialKeyRepeat (the delay) and KeyRepeat
+// (the interval). Absent keys mean the system defaults, which InputManager's own defaults stand in for.
+static bool pref_int(CFStringRef key, long& out) {
+  CFPropertyListRef v = CFPreferencesCopyAppValue(key, kCFPreferencesAnyApplication);
+  if (!v) return false;
+  bool ok = CFGetTypeID(v) == CFNumberGetTypeID() && CFNumberGetValue((CFNumberRef)v, kCFNumberLongType, &out);
+  CFRelease(v);
+  return ok;
+}
+#endif
+
 static InputManager::Typematic os_typematic() {
   InputManager::Typematic t;
+#if !defined(_WIN32)
+  long initial = 0, repeat = 0;
+  if (pref_int(CFSTR("InitialKeyRepeat"), initial) && initial > 0) t.initial_delay = initial * 0.015;
+  if (pref_int(CFSTR("KeyRepeat"), repeat) && repeat > 0) t.repeat_interval = repeat * 0.015;
+  return t;
+#else
   int delay = 0, speed = 0;
   if (SystemParametersInfoW(SPI_GETKEYBOARDDELAY, 0, &delay, 0) && SystemParametersInfoW(SPI_GETKEYBOARDSPEED, 0, &speed, 0)) {
     delay = delay < 0 ? 0 : delay > 3 ? 3 : delay;  // 0..3 -> 250..1000 ms
@@ -41,6 +63,7 @@ static InputManager::Typematic os_typematic() {
     t.repeat_interval = 1.0 / (2.5 + (speed / 31.0) * 27.5);
   }
   return t;
+#endif
 }
 
 static void register_actions() {

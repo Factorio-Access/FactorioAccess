@@ -1,5 +1,6 @@
 #include "mac/layout.h"
 #include <cstring>
+#include <string>
 #include <string_view>
 #include "log.h"
 #include "sym.h"
@@ -114,11 +115,13 @@ std::optional<int64_t> first_self_sub(const uint32_t* code, int limit) {
 }
 
 namespace {
-enum Kind { Load, Store, Any, AddImm };
+enum Kind { Load, Store, Any, AddImm, StoreFrom };
 
 // One field: read off the nth access of `kind` through `base` (the register holding the object pointer at entry)
 // in `func`, counting only accesses of `size` bytes when set. `add` is added to the decoded offset (a string's
-// last byte read for its length, the second register of a pair).
+// last byte read for its length, the second register of a pair). StoreFrom takes the first store of register `nth`
+// (an argument being written into the object). `minus` ("Type::member") makes the result relative to that field:
+// a member of a struct embedded in another. `func` may be a mangled name, to pick one overload.
 struct Recipe {
   const char* type;
   const char* member;
@@ -127,6 +130,7 @@ struct Recipe {
   int nth = 0;
   int size = 0;
   int64_t add = 0;
+  const char* minus = nullptr;
   int base = 0;
 };
 
@@ -163,6 +167,12 @@ const Recipe kRecipes[] = {
     {"agui::MouseEvent", "previous", "agui::MouseEvent::copyWithNewType", Load, 0, 8},              // ldr x8, [x0, #0x30]
     {"Mod", "package", "Mod::getModPath", Load, 0, 8},                                              // ldr x9, [x0]
     {"Package", "packagePath_", "Package::init", AddImm, 0},                                        // add x0, x0, #0x40
+    {"SDLWindow", "window", "SDLWindow::getWindow", Load, 0, 8},                                    // ldr x0, [x0, #0x18]
+    // Event::Event(double, Event::Type, KeyboardEvent): the 16-byte KeyboardEvent arrives in x2 (scancode, mod) and
+    // x3 (unichar, repeat).
+    {"Event", "type", "_ZN5EventC2EdNS_4TypeE13KeyboardEvent", Store, 0, 4},                         // str w1, [x0]
+    {"Event", "keyboard", "_ZN5EventC2EdNS_4TypeE13KeyboardEvent", StoreFrom, 2, 8},                // str x2, [x0, #0x10]
+    {"KeyboardEvent", "unichar", "_ZN5EventC2EdNS_4TypeE13KeyboardEvent", StoreFrom, 3, 4, 0, "Event::keyboard"},  // str w3, [x0, #0x18]
 };
 
 // Members no function reaches on its own; each with where it was read.
@@ -175,6 +185,11 @@ const Fixed kFixed[] = {
     // std::unique_ptr<agui::StyleInfo>::~unique_ptr frees the string at +0 (ldrsb [x20, #0x17]; ldr x0, [x20]), and
     // Style::getParentPathString reads its size and data at +0x17 and +8.
     {"agui::StyleInfo", "name", 0},
+    // KeyboardEvent is {u32 scancode, u16 mod, u32 unichar, bool repeat}: Event::Event stores the first two as one
+    // register (str x2) and the last two from x3 with `lsr x8, x3, #32; strb w8, [x0, #0x1c]`.
+    {"KeyboardEvent", "scancode", 0},
+    {"KeyboardEvent", "mod", 4},
+    {"KeyboardEvent", "repeat", 0xc},
 };
 
 struct SizeRecipe {
@@ -209,12 +224,27 @@ std::optional<std::size_t> offset(const char* type, const char* member) {
       if (!imm) log::writef("layout: {}::{}: add {} not found in {}", type, member, r.nth, r.func);
       return imm ? std::optional<std::size_t>(*imm + r.add) : std::nullopt;
     }
-    auto a = nth_access(code, kScanLimit, r.base, r.kind != Store, r.kind != Load, r.nth, r.size);
+    std::optional<Access> a;
+    if (r.kind == StoreFrom) {
+      for (int n = 0; (a = nth_access(code, kScanLimit, r.base, false, true, n, r.size)); ++n)
+        if (a->rt == r.nth) break;
+    } else {
+      a = nth_access(code, kScanLimit, r.base, r.kind != Store, r.kind != Load, r.nth, r.size);
+    }
     if (!a) {
       log::writef("layout: {}::{}: access {} not found in {}", type, member, r.nth, r.func);
       return std::nullopt;
     }
-    return (std::size_t)(a->offset + r.add);
+    int64_t result = a->offset + r.add;
+    if (r.minus) {
+      std::string_view m(r.minus);
+      size_t sep = m.rfind("::");
+      std::string t(m.substr(0, sep)), f(m.substr(sep + 2));
+      auto base = offset(t.c_str(), f.c_str());
+      if (!base) return std::nullopt;
+      result -= (int64_t)*base;
+    }
+    return (std::size_t)result;
   }
   log::writef("layout: no recipe for {}::{}", type, member);
   return std::nullopt;

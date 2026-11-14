@@ -1,18 +1,24 @@
 // The Mac entry point. The library is loaded into the game with DYLD_INSERT_LIBRARIES (tools/mac/launch.sh sets it), and
 // its initializer runs before the game's main(), on the main thread, so every hook is in place before the game's
-// first frame. So far: speech, the Lua bridge (`_fa_native`: speech, sounds, clipboard, pointer) and the startup
-// report of what was resolved. The main menus, input and the rest follow.
+// first frame. So far: the main menus (app.cpp, screens/dialogs.cpp), keyboard input, speech, the Lua bridge (`_fa_native`: speech, sounds, clipboard, pointer), the update check, the
+// watchdog, the dev server (FA_PORT) and the startup report of what was resolved.
 #include <chrono>
 #include <cstdlib>
 #include <format>
 #include <string>
 #include <vector>
+#include "agui.h"
+#include "app.h"
 #include "assets.h"
+#include "devserver.h"
+#include "game.h"
 #include "audio/audio.h"
 #include "clipboard.h"
 #include "hooks.h"
 #include "lua_native.h"
 #include "speech.h"
+#include "update_check.h"
+#include "watchdog.h"
 #include "log.h"
 #include "sym.h"
 
@@ -106,7 +112,7 @@ __attribute__((constructor)) static void fa_init() {
     return;
   }
   report();
-  if (!fa::lua::init() || !fa::assets::init()) {
+  if (!fa::agui::init() || !fa::game::init() || !fa::lua::init() || !fa::assets::init()) {
     fa::speech::speak("Factorio Access native code does not support this game version and is disabled", true);
     return;
   }
@@ -121,15 +127,10 @@ __attribute__((constructor)) static void fa_init() {
   if (!fa::audio::init([](std::string_view name) { return fa::assets::read("audio/" + std::string(name)); }))
     fa::log::write("fa_native: audio unavailable");
   fa::clipboard::start();
-  // How often the main loop steps, measured once: on the Mac it steps far more often than it draws.
-  fa::hooks::set_frame_callback([] {
-    using clock = std::chrono::steady_clock;
-    static clock::time_point start = clock::now();
-    static bool reported = false;
-    if (!reported && clock::now() - start >= std::chrono::seconds(5)) {
-      reported = true;
-      fa::log::writef("fa_native: {} main loop steps in the first 5 s", fa::hooks::frame());
-    }
-  });
+  fa::app::init();
+  fa::hooks::set_frame_callback(fa::app::tick);
+  if (const char* port = std::getenv("FA_PORT")) fa::dev::start(std::atoi(port));
+  fa::watchdog::start();
+  fa::update::start();  // asks GitHub for a newer build; spoken on the main menu when there is one
   fa::log::writef("fa_native: ready, speech {}", sp ? fa::speech::backend_name() : "unavailable");
 }

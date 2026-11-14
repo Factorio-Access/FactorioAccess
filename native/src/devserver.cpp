@@ -1,7 +1,22 @@
 #include "devserver.h"
+#if defined(_WIN32)
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <windows.h>
+#else
+#include <arpa/inet.h>
+#include <cerrno>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <unistd.h>
+#include <chrono>
+#include <thread>
+using SOCKET = int;
+constexpr SOCKET INVALID_SOCKET = -1;
+static int closesocket(SOCKET s) { return close(s); }
+static unsigned long GetCurrentProcessId() { return (unsigned long)getpid(); }
+static void Sleep(unsigned ms) { std::this_thread::sleep_for(std::chrono::milliseconds(ms)); }
+#endif
 #include <atomic>
 #include <format>
 #include <map>
@@ -25,7 +40,8 @@ using Query = std::map<std::string, std::string>;
 
 static std::atomic<bool> g_run{false};
 static SOCKET g_listen = INVALID_SOCKET;
-static std::thread g_thread;
+// Never destroyed: a joinable std::thread destroyed when the game exits calls std::terminate.
+static std::thread* g_thread;
 
 static std::string url_decode(std::string_view s) {
   std::string o;
@@ -188,6 +204,7 @@ struct JobCtx {
   std::string* out;
 };
 static void run_job(JobCtx* c) { *c->out = handle(*c->path, *c->q, *c->status); }
+#if defined(_WIN32)
 static int seh_filter(EXCEPTION_POINTERS* ep, void** addr, DWORD* code) {
   *addr = ep->ExceptionRecord->ExceptionAddress;
   *code = ep->ExceptionRecord->ExceptionCode;
@@ -211,6 +228,14 @@ static std::string module_offset(void* addr) {
   base = base ? base + 1 : path;
   return std::format("{}+{:#x}", base, (uintptr_t)addr - (uintptr_t)m);
 }
+#else
+// No fault guard on the Mac: a route that faults takes the game down (dev tooling only).
+static unsigned run_job_seh(JobCtx* c, void**) {
+  run_job(c);
+  return 0;
+}
+static std::string module_offset(void* addr) { return std::format("{}", addr); }
+#endif
 
 static void serve(SOCKET c) {
   std::string req;
@@ -245,7 +270,7 @@ static void serve(SOCKET c) {
       [owned] {
         JobCtx ctx{&owned->path, &owned->query, &owned->status, &owned->out};
         void* addr = nullptr;
-        if (DWORD code = run_job_seh(&ctx, &addr)) {
+        if (auto code = run_job_seh(&ctx, &addr)) {
           owned->status = 500;
           owned->out = std::format("route faulted: exception {:#x} at {}\n", code, module_offset(addr));
           log::write(owned->out);
@@ -265,23 +290,38 @@ static void serve(SOCKET c) {
 }
 
 static void loop(int port) {
+#if defined(_WIN32)
   WSADATA w;
   WSAStartup(MAKEWORD(2, 2), &w);
+#endif
   g_listen = socket(AF_INET, SOCK_STREAM, 0);
+#if !defined(_WIN32)
+  int yes = 1;
+  setsockopt(g_listen, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof yes);
+#endif
   sockaddr_in a{};
   a.sin_family = AF_INET;
   a.sin_port = htons((u_short)port);
   a.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
   if (bind(g_listen, (sockaddr*)&a, sizeof a) != 0 || listen(g_listen, 8) != 0) {
+#if defined(_WIN32)
     log::writef("devserver: bind/listen on {} failed: {}", port, WSAGetLastError());
+#else
+    log::writef("devserver: bind/listen on {} failed: {}", port, errno);
+#endif
     return;
   }
   log::writef("devserver: listening on 127.0.0.1:{}", port);
   while (g_run) {
     SOCKET c = accept(g_listen, nullptr, nullptr);
     if (c == INVALID_SOCKET) break;
+#if defined(_WIN32)
     DWORD to = 10000;
     setsockopt(c, SOL_SOCKET, SO_RCVTIMEO, (const char*)&to, sizeof to);
+#else
+    timeval to{10, 0};
+    setsockopt(c, SOL_SOCKET, SO_RCVTIMEO, &to, sizeof to);
+#endif
     serve(c);
     closesocket(c);
   }
@@ -290,7 +330,7 @@ static void loop(int port) {
 void start(int port) {
   if (g_run) return;
   g_run = true;
-  g_thread = std::thread(loop, port);
+  g_thread = new std::thread(loop, port);
 }
 
 void stop() {
@@ -299,6 +339,6 @@ void stop() {
     closesocket(g_listen);
     g_listen = INVALID_SOCKET;
   }
-  if (g_thread.joinable()) g_thread.join();
+  if (g_thread && g_thread->joinable()) g_thread->join();
 }
 }  // namespace fa::dev

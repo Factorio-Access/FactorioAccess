@@ -30,6 +30,7 @@
 #include <vector>
 #include "log.h"
 #include "mac/speech_audio.h"
+#include "mac/speech_mac.h"
 
 namespace fa::speech {
 namespace {
@@ -506,6 +507,13 @@ void stop() {
     g_voice->lines.clear();
     g_voice->clear_requested = true;
   }
+}
+
+void key_pressed() {
+  if (!g_voice || g_muted) return;
+  std::lock_guard l2(g_voice->mu);
+  g_voice->lines.clear();
+  g_voice->clear_requested = true;
 }
 
 void set_muted(bool m) { g_muted = m; }
