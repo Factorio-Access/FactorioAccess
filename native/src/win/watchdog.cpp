@@ -20,7 +20,9 @@ constexpr auto kStall = std::chrono::seconds(2);
 constexpr auto kRepeat = std::chrono::seconds(10);
 constexpr auto kNoteGap = std::chrono::seconds(1);
 
-std::thread g_thread;
+// Never destroyed while it runs: the game exits without fa_unload, and a joinable std::thread destroyed then calls
+// std::terminate (a fail-fast crash on every exit).
+std::thread* g_thread;
 std::mutex g_mu;
 std::condition_variable g_cv;
 bool g_stop = false;
@@ -76,8 +78,9 @@ void report_now() {
 }
 
 void start() {
+  if (g_thread) return;
   g_stop = false;
-  g_thread = std::thread(run);
+  g_thread = new std::thread(run);
 }
 
 void stop() {
@@ -86,6 +89,9 @@ void stop() {
     g_stop = true;
   }
   g_cv.notify_all();
-  if (g_thread.joinable()) g_thread.join();
+  if (!g_thread) return;
+  if (g_thread->joinable()) g_thread->join();
+  delete g_thread;  // joined, so safe; fa_unload (the dev loop's eject) leaves nothing behind
+  g_thread = nullptr;
 }
 }  // namespace fa::watchdog
