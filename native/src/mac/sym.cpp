@@ -39,6 +39,11 @@ std::vector<std::string> candidates(std::string_view name) {
 
 std::vector<uintptr_t> all_addrs(const char* name) {
   std::vector<uintptr_t> out;
+  // An already mangled name ("_ZN5EventC2Ed...") names one overload exactly.
+  if (std::string_view(name).starts_with("_Z")) {
+    if (uintptr_t a = mac::image::exact(name)) out.push_back(a);
+    return out;
+  }
   auto c = candidates(name);
   // A bare name is exact first (C functions, variables); its C++ form is a prefix.
   if (split(name).size() == 1) {

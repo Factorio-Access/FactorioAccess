@@ -372,8 +372,10 @@ code. Disassemble a function before guessing what it does.
 ### macOS (in progress, branch mac-native)
 
 The Mac layer is `native/src/mac/`; everything platform-free (`ui/`, `audio/`, `update/`, `lua_native.cpp`,
-`assets.cpp`) is shared. Done: loading, name/field/slot resolution, hooks, speech, and the `_fa_native` bridge
-(speech, sounds, clipboard, pointer). The main menus, input and the rest are not ported yet.
+`assets.cpp`, `app.cpp`, `screens/`, `input.cpp`, `game.cpp`, `devserver.cpp`) is shared. Everything the Windows
+layer does is ported: the main menus and their keyboard, speech, the `_fa_native` bridge, the update check, the
+watchdog and the dev server (`FA_PORT`). Not on the Mac: `FA_NOFOCUS`, the game-audio half of `FA_MUTE` (speech
+still mutes), the dev server's fault guard (a faulting route takes the game down), and `fadev.py`/the installer.
 
 - The game (Steam, `~/Library/Application Support/Steam/steamapps/common/Factorio/factorio.app`) is native arm64,
   clang + its own statically linked libc++ (Itanium ABI). Its hardened runtime allows `DYLD_INSERT_LIBRARIES`
@@ -385,7 +387,13 @@ The Mac layer is `native/src/mac/`; everything platform-free (`ui/`, `audio/`, `
   The startup log compares them with the values read by hand off 2.1.24 and flags a mismatch.
 - Virtual slots: the method's address found in the class's vtable (`vtable for agui::Widget`).
 - Hooks: `mac/inline_hook.cpp`, four patched instructions and a relocating trampoline. Pure parts are tested in
-  `tests_mac/`.
+  `tests_mac/`. SDL3 is static with its dynamic API: `SDL_Foo` is a 3-instruction stub through a jump table, too
+  short to patch, so `SDL_GetModState` is hooked by swapping its table pointer (`jump_slot` in `mac/hooks.cpp`) on
+  the first frame, once SDL has filled the table.
+- Widgets (`mac/agui.cpp`): libc++ layouts (`mac/abi.h`) and Itanium RTTI; type_info names are compared, never
+  their addresses (arm64 marks non-unique RTTI in the name pointer's top bit).
+- Threads that live for the session are allocated and never destroyed: the game exits through `exit()`, and a
+  joinable `std::thread` destroyed then calls `std::terminate`.
 - The library's initializer runs before the game's `main()`. Initializers run in link order, so `mac/entry.cpp` stays
   last in its CMake list.
 - Speech (`mac/speech.mm`, NonVisualCalculus' design): a running screen reader's Prism plugin
@@ -395,8 +403,8 @@ The Mac layer is `native/src/mac/`; everything platform-free (`ui/`, `audio/`, `
   sits next to the library, weakly linked.
 - arm64 returns a large struct through x8, not a hidden first argument: `LuaHelper::parseLocalisedString` is declared
   as returning a buffer struct on the Mac (`lua_native.cpp`).
-- The main loop steps about 1500 times a second on the Mac, far more than it draws: anything per-frame must not
-  assume one step is one frame.
+- `MainLoop::run` calls `mainLoopStep` back to back on the Mac (about 1500 a second; the step sleeps and decides
+  when to draw). The native frame (`mac/hooks.cpp`) runs at most 240 times a second; one step is not one frame.
 
 ```bash
 cmake -S native -B native/build/mac -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo
@@ -405,6 +413,7 @@ native/build/mac/fa_mac_tests && native/build/mac/faui_tests && native/build/mac
 ln -s "$PWD" ~/Library/Application\ Support/factorio/mods/FactorioAccess   # once; then enable it in mod-list.json
 native/tools/mac/launch.sh [game args]   # Steam running; log: ~/Library/Logs/FactorioAccess/native.log
 native/tools/mac/launch.sh --enable-lua-udp 52345 --load-game <save.zip>   # dev Lua over UDP (scripts/dev-udp.lua)
+FA_PORT=8765 FA_MUTE=1 native/tools/mac/launch.sh   # dev server: curl localhost:8765/key?name=down, /speech?since=0, /ui/nav
 pkill -TERM -f MacOS/factorio     # the game quits cleanly on SIGTERM
 ```
 
