@@ -147,12 +147,11 @@ jobs:
         shell: bash
         run: rustup show active-toolchain || rustup toolchain install
         working-directory: installer
+      # CMake build directories contain absolute MSVC paths that can go stale when the runner image changes.
       - uses: actions/cache@v6
         with:
-          path: |
-            installer/target
-            ~/.cargo/registry
-          key: installer-${{ runner.os }}-${{ hashFiles('installer/Cargo.lock', 'installer/rust-toolchain.toml') }}
+          path: ~/.cargo/registry
+          key: installer-deps-${{ runner.os }}-${{ hashFiles('installer/Cargo.lock', 'installer/rust-toolchain.toml') }}
       - name: Installer tests
         shell: cmd
         run: cargo test --release
