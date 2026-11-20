@@ -21,9 +21,8 @@ on:
   workflow_dispatch:
 
 env:
-  # The branch whose pushes republish `ci-latest`. For now the prototyping branch f2.1; change it here, and only here,
-  # when releases move to main.
-  CI_LATEST_BRANCH: f2.1
+  # The branch whose pushes republish `ci-latest`.
+  CI_LATEST_BRANCH: main
 
 permissions:
   contents: read
