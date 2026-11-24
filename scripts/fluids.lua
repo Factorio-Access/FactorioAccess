@@ -80,7 +80,7 @@ end
 ---@return string?
 local function get_local_fluidbox_constraint(entity, index)
    local filt = entity.get_fluid_filter(index)
-   if filt and filt.fluid then return fluid_id_name(filt.fluid) end
+   if filt then return fluid_id_name(filt) end
    if not entity.has_fluid_segment(index) then return end
    local seg = entity.get_fluid_segment_fluid(index)
    if seg then return seg.name end
@@ -102,7 +102,7 @@ local function get_fluidbox_constraint(entity, index)
    if first_attempt then return first_attempt end
 
    -- Otherwise try adjacents.
-   for _, c in pairs(assert(entity.get_fluid_box_pipe_connections(index))) do
+   local adj_conns = entity.get_fluid_box_pipe_connections(index); if not adj_conns then return end; for _, c in pairs(adj_conns) do
       if c.target then
          local try = get_local_fluidbox_constraint(c.target, assert(c.target_fluidbox_index))
          if try then return try end
@@ -208,7 +208,7 @@ function mod.get_pipe_shape(ent)
    assert(ent.fluids_count == 1)
 
    local dirs = {}
-   local conns = assert(ent.get_fluid_box_pipe_connections(1))
+   local conns = ent.get_fluid_box_pipe_connections(1); if not conns then return {shape="alone", direction=0} end
 
    for _, conn in pairs(conns) do
       if conn.target and (conn.target.type == "pipe" or conn.target.type == "infinity-pipe") then
@@ -247,7 +247,7 @@ function mod.build_fluid_descriptors(entity)
       for i = 1, fluids_count do
          local prototype = entity.get_fluid_box_prototype(i)
          local filter = entity.get_fluid_filter(i)
-         local locked_fluid = filter and filter.fluid and fluid_id_name(filter.fluid)
+         local locked_fluid = filter and fluid_id_name(filter)
          local fluid_data = entity.get_fluid(i)
 
          -- Determine the production type
