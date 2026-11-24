@@ -125,7 +125,8 @@ function mod.get_connection_points(ent)
    local closed_because_no_recipe = is_crafting_machine and ent.get_recipe() == nil
 
    for i = 1, ent.fluids_count do
-      local conns = assert(ent.get_fluid_box_pipe_connections(i))
+      local conns = ent.get_fluid_box_pipe_connections(i)
+      if not conns then goto continue_end_i end
       local fluid = get_fluidbox_constraint(ent, i)
 
       for j = 1, #conns do
