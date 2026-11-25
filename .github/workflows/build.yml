@@ -21,9 +21,8 @@ on:
   workflow_dispatch:
 
 env:
-  # The branch whose pushes republish `ci-latest`. For now the prototyping branch f2.1; change it here, and only here,
-  # when releases move to main.
-  CI_LATEST_BRANCH: f2.1
+  # The branch whose pushes republish `ci-latest`.
+  CI_LATEST_BRANCH: main
 
 permissions:
   contents: read
@@ -147,12 +146,11 @@ jobs:
         shell: bash
         run: rustup show active-toolchain || rustup toolchain install
         working-directory: installer
+      # CMake build directories contain absolute MSVC paths that can go stale when the runner image changes.
       - uses: actions/cache@v6
         with:
-          path: |
-            installer/target
-            ~/.cargo/registry
-          key: installer-${{ runner.os }}-${{ hashFiles('installer/Cargo.lock', 'installer/rust-toolchain.toml') }}
+          path: ~/.cargo/registry
+          key: installer-deps-${{ runner.os }}-${{ hashFiles('installer/Cargo.lock', 'installer/rust-toolchain.toml') }}
       - name: Installer tests
         shell: cmd
         run: cargo test --release
