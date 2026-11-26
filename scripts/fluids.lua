@@ -102,7 +102,9 @@ local function get_fluidbox_constraint(entity, index)
    if first_attempt then return first_attempt end
 
    -- Otherwise try adjacents.
-   local adj_conns = entity.get_fluid_box_pipe_connections(index); if not adj_conns then return end; for _, c in pairs(adj_conns) do
+   local adj_conns = entity.get_fluid_box_pipe_connections(index)
+   if not adj_conns then return end
+   for _, c in pairs(adj_conns) do
       if c.target then
          local try = get_local_fluidbox_constraint(c.target, assert(c.target_fluidbox_index))
          if try then return try end
@@ -208,7 +210,8 @@ function mod.get_pipe_shape(ent)
    assert(ent.fluids_count == 1)
 
    local dirs = {}
-   local conns = ent.get_fluid_box_pipe_connections(1); if not conns then return {shape="alone", direction=0} end
+   local conns = ent.get_fluid_box_pipe_connections(1)
+   if not conns then return { shape = "alone", direction = 0 } end
 
    for _, conn in pairs(conns) do
       if conn.target and (conn.target.type == "pipe" or conn.target.type == "infinity-pipe") then
