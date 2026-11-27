@@ -127,56 +127,58 @@ function mod.get_connection_points(ent)
    local closed_because_no_recipe = is_crafting_machine and ent.get_recipe() == nil
 
    for i = 1, ent.fluids_count do
-      local conns = assert(ent.get_fluid_box_pipe_connections(i))
-      local fluid = get_fluidbox_constraint(ent, i)
+      local conns = ent.get_fluid_box_pipe_connections(i)
+      if conns then
+         local fluid = get_fluidbox_constraint(ent, i)
 
-      for j = 1, #conns do
-         local c = conns[j]
-         local c_pos = c.position --[[@as MapPosition.struct]]
-         local c_target_pos = c.target_position --[[@as MapPosition.struct]]
-         local sx = math.floor(c_pos.x) + 0.5
-         local sy = math.floor(c_pos.y) + 0.5
+         for j = 1, #conns do
+            local c = conns[j]
+            local c_pos = c.position --[[@as MapPosition.struct]]
+            local c_target_pos = c.target_position --[[@as MapPosition.struct]]
+            local sx = math.floor(c_pos.x) + 0.5
+            local sy = math.floor(c_pos.y) + 0.5
 
-         local tx = math.floor(c_target_pos.x) + 0.5
-         local ty = math.floor(c_target_pos.y) + 0.5
-         local out_dir
-         local in_dir
-         if c.flow_direction == "input" then
-            in_dir = FaUtils.rotate_180(FaUtils.direction_of_vector({ x = tx - sx, y = ty - sy }))
-         elseif c.flow_direction == "output" then
-            out_dir = FaUtils.direction_of_vector({ x = tx - sx, y = ty - sy })
-         else -- input-output
-            out_dir = FaUtils.direction_of_vector({ x = tx - sx, y = ty - sy })
-            in_dir = FaUtils.rotate_180(out_dir)
+            local tx = math.floor(c_target_pos.x) + 0.5
+            local ty = math.floor(c_target_pos.y) + 0.5
+            local out_dir
+            local in_dir
+            if c.flow_direction == "input" then
+               in_dir = FaUtils.rotate_180(FaUtils.direction_of_vector({ x = tx - sx, y = ty - sy }))
+            elseif c.flow_direction == "output" then
+               out_dir = FaUtils.direction_of_vector({ x = tx - sx, y = ty - sy })
+            else -- input-output
+               out_dir = FaUtils.direction_of_vector({ x = tx - sx, y = ty - sy })
+               in_dir = FaUtils.rotate_180(out_dir)
+            end
+
+            local distance_in_tiles = 1
+
+            -- For underground and linked connections, the game does not report the
+            -- position of the other side directly and instead yields the position
+            -- of the fluidbox in this entity, e.g. c.position==c.target.  We have
+            -- to look at the other side indirectly. Careful: if there is no other
+            -- side yet, we can't know.
+            if c.connection_type ~= "normal" and c.target then
+               local other_pos =
+                  c.target.get_fluid_box_pipe_connections(assert(c.target_fluidbox_index))[c.target_pipe_connection_index].position
+               distance_in_tiles = math.ceil(FaUtils.distance(c.position, other_pos))
+            end
+            local open = true
+            if is_crafting_machine then open = not closed_because_no_recipe or ent.get_fluid_filter(i) ~= nil end
+            ---@type fa.Fluids.ConnectionPoint
+            local part = {
+               bidirectional = in_dir ~= nil and out_dir ~= nil,
+               position = { x = sx, y = sy },
+               raw = c,
+               type = c.connection_type,
+               fluid = fluid,
+               input_direction = in_dir,
+               output_direction = out_dir,
+               open = open,
+               distance_in_tiles = distance_in_tiles,
+            }
+            table.insert(res, part)
          end
-
-         local distance_in_tiles = 1
-
-         -- For underground and linked connections, the game does not report the
-         -- position of the other side directly and instead yields the position
-         -- of the fluidbox in this entity, e.g. c.position==c.target.  We have
-         -- to look at the other side indirectly. Careful: if there is no other
-         -- side yet, we can't know.
-         if c.connection_type ~= "normal" and c.target then
-            local other_pos =
-               c.target.get_fluid_box_pipe_connections(assert(c.target_fluidbox_index))[c.target_pipe_connection_index].position
-            distance_in_tiles = math.ceil(FaUtils.distance(c.position, other_pos))
-         end
-         local open = true
-         if is_crafting_machine then open = not closed_because_no_recipe or ent.get_fluid_filter(i) ~= nil end
-         ---@type fa.Fluids.ConnectionPoint
-         local part = {
-            bidirectional = in_dir ~= nil and out_dir ~= nil,
-            position = { x = sx, y = sy },
-            raw = c,
-            type = c.connection_type,
-            fluid = fluid,
-            input_direction = in_dir,
-            output_direction = out_dir,
-            open = open,
-            distance_in_tiles = distance_in_tiles,
-         }
-         table.insert(res, part)
       end
    end
 
